@@ -60,7 +60,7 @@ O objetivo é aplicar conceitos de **análise, especificação, projeto e implem
 - ✉️ Email: contato@receitasdeliciosas.com  
 - 📱 Telefone: (11) 1234-5678  
 - 📍 Endereço: Rua das Delícias, 123 - São Paulo/SP  
-- 🧾 **CNPJ (fictício): 12AB34CD56EF78**
+- 🧾 **CNPJ (fictício): 12.AB3.4CD/56EF-78**
 
 ---
 
