@@ -51,13 +51,17 @@ body {
 
 .banner h1 {
     top: 30%;
-    font-size: 2rem;
-    font-weight: 600;
+    font-size: 3rem;        /* aumentei o tamanho da fonte */
+    font-weight: 700;       /* mais destaque */
+    letter-spacing: 1px;    /* espaçamento para dar impacto */
 }
 
 .banner p {
-    top: 60%;
-    font-size: 1.1rem;
+    top: 65%;
+    font-size: 0.9rem;      /* menor que o h1 */
+    font-style: italic;     /* estilo de disclaimer */
+    color: #f1f1f1;         /* cinza claro para suavizar */
+    opacity: 0.8;           /* mais discreto */
 }
 
 /* Navbar */
@@ -111,6 +115,19 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.navbar .nav-links a {
+    color: white;
+    /* branco para contraste no fundo laranja */
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.navbar .nav-links a:hover {
+    color: #f1c40f;
+    /* amarelo/dourado no hover */
+    text-decoration: underline;
 }
 
 .navbar .nav-links .dropdown svg {
@@ -236,13 +253,22 @@ body {
     margin: 40px 0 20px;
 }
 
-.recipes-header h2 {
+.recipes-header h2,
+.recipes-header h3 {
     font-size: 2rem;
     color: #d35400;
     font-weight: 600;
     border-bottom: 3px solid #e67e22;
     display: inline-block;
     padding-bottom: 8px;
+}
+
+
+/* Títulos das receitas */
+.recipe h4 {
+    color: #d35400;
+    /* tom laranja mais escuro */
+    font-weight: 600;
 }
 
 /* Cartão de receita */
@@ -300,4 +326,67 @@ footer {
 
 footer p {
     margin: 5px 0;
+}
+
+/* Página de detalhe da receita */
+.recipe-detail {
+    background: #fff;
+    border-radius: 12px;
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 30px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.recipe-detail img {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.recipe-detail h1 {
+    font-size: 2rem;
+    color: #d35400;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.recipe-detail h2 {
+    font-size: 1.4rem;
+    color: #e67e22;
+    margin-top: 25px;
+    margin-bottom: 10px;
+}
+
+.recipe-detail p {
+    font-size: 1rem;
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.recipe-detail ul,
+.recipe-detail ol {
+    margin-left: 20px;
+    margin-bottom: 20px;
+    color: #444;
+}
+
+.recipe-detail li {
+    margin-bottom: 8px;
+    line-height: 1.5;
+}
+
+a {
+    color: inherit;
+    /* herda a cor do elemento pai */
+    text-decoration: none;
+}
+
+a:hover {
+    color: #e67e22;
+    /* laranja da paleta */
+    text-decoration: underline;
 }
