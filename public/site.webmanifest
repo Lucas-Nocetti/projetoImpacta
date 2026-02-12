@@ -1,0 +1,16 @@
+{
+  "name": "Task Manager",
+  "short_name": "TaskMgr",
+  "start_url": "/login",
+  "display": "standalone",
+  "background_color": "#f4f7ff",
+  "theme_color": "#0b1628",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "64x64",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

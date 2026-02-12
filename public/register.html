@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Task Manager | Cadastro</title>
+    <meta
+      name="description"
+      content="Crie sua conta no Task Manager para organizar projetos, itens e comentários em equipe."
+    />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <h1>Task Manager</h1>
+        <p>Crie sua conta</p>
+      </div>
+    </header>
+
+    <main>
+      <section class="card auth-card auth-single">
+        <h2>Cadastro</h2>
+        <form id="register-form">
+          <input
+            type="text"
+            id="register-name"
+            placeholder="Nome completo"
+            minlength="15"
+            required
+          />
+          <p class="hint">Mínimo de 15 caracteres e nome completo.</p>
+          <input type="email" id="register-email" placeholder="email@empresa.com" required />
+          <p class="hint">Formato válido: texto@texto.com.</p>
+          <input
+            type="password"
+            id="register-password"
+            placeholder="Senha forte"
+            pattern="^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$"
+            required
+          />
+          <p class="hint">Use 1 letra maiúscula, 1 número e 1 caractere especial.</p>
+          <button type="submit">Cadastrar</button>
+        </form>
+        <p class="hint auth-switch">
+          Já possui conta? <a href="/login">Fazer login</a>
+        </p>
+      </section>
+    </main>
+
+    <div id="toast"></div>
+    <script src="./form-feedback.js"></script>
+    <script src="./register.js"></script>
+  </body>
+</html>
