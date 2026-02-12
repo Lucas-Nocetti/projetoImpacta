@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Task Manager | Projetos</title>
+    <meta
+      name="description"
+      content="Selecione um projeto no Task Manager para acompanhar itens, comentários e atividades."
+    />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <h1>Task Manager</h1>
+        <p>Seus projetos</p>
+      </div>
+      <div id="session-area"></div>
+    </header>
+
+    <main>
+      <section class="card">
+        <div class="section-header">
+          <h2>Projetos vinculados</h2>
+          <a id="go-create-project" class="button-link" href="/project-create">Criar projeto</a>
+        </div>
+        <p class="hint">Clique em um card para abrir o projeto.</p>
+        <div id="projects-grid" class="project-grid"></div>
+      </section>
+    </main>
+
+    <div id="toast"></div>
+    <script src="./form-feedback.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>

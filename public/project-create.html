@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Task Manager | Criar Projeto</title>
+    <meta name="description" content="Crie um novo projeto no Task Manager." />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <h1>Task Manager</h1>
+        <p>Novo projeto</p>
+      </div>
+      <div id="session-area"></div>
+    </header>
+
+    <main>
+      <section class="card auth-card auth-single">
+        <h2>Criar projeto</h2>
+        <form id="project-form">
+          <input
+            type="text"
+            id="project-name"
+            placeholder="Nome do projeto"
+            minlength="3"
+            required
+          />
+          <textarea
+            id="project-description"
+            placeholder="Descrição detalhada do projeto"
+            minlength="30"
+            required
+          ></textarea>
+          <p class="hint">Descrição com no mínimo 30 caracteres.</p>
+          <button type="submit">Salvar projeto</button>
+        </form>
+        <p class="hint auth-switch">
+          <a href="/app">Voltar para projetos</a>
+        </p>
+      </section>
+    </main>
+
+    <div id="toast"></div>
+    <script src="./form-feedback.js"></script>
+    <script src="./project-create.js"></script>
+  </body>
+</html>

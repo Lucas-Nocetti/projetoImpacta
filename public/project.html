@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Task Manager | Projeto</title>
+    <meta
+      name="description"
+      content="Visualize itens, comentários e configurações do projeto no Task Manager."
+    />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <h1>Task Manager</h1>
+        <p id="project-role-label"></p>
+      </div>
+      <div id="session-area"></div>
+    </header>
+
+    <main>
+      <section class="card">
+        <div class="section-header">
+          <h2 id="project-title">Projeto</h2>
+          <div class="inline-actions">
+            <button id="back-to-projects" type="button">Voltar</button>
+            <button id="open-task-create" type="button">Novo item</button>
+            <button id="open-settings" type="button">Configurações</button>
+          </div>
+        </div>
+        <p id="project-description" class="hint"></p>
+      </section>
+
+      <section class="kanban-board">
+        <article class="kanban-column">
+          <h3>A fazer</h3>
+          <ul id="col-a-fazer" class="kanban-list"></ul>
+        </article>
+        <article class="kanban-column">
+          <h3>Fazendo</h3>
+          <ul id="col-fazendo" class="kanban-list"></ul>
+        </article>
+        <article class="kanban-column">
+          <h3>Concluído</h3>
+          <ul id="col-concluido" class="kanban-list"></ul>
+        </article>
+      </section>
+    </main>
+
+    <section id="task-modal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-head">
+          <h3 id="task-modal-title">Item</h3>
+          <button id="close-task-modal" type="button" class="btn-light">Fechar</button>
+        </div>
+        <p id="task-modal-description" class="hint"></p>
+        <form id="task-comment-form">
+          <textarea
+            id="task-comment-content"
+            placeholder="Escreva um comentário neste item"
+            minlength="20"
+            required
+          ></textarea>
+          <button type="submit">Adicionar comentário</button>
+        </form>
+        <ul id="task-comments-list" class="list"></ul>
+      </div>
+    </section>
+
+    <section id="task-create-modal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-head">
+          <h3>Novo item</h3>
+          <button id="close-task-create-modal" type="button" class="btn-light">Fechar</button>
+        </div>
+        <form id="task-form">
+          <input
+            type="text"
+            id="task-title-input"
+            placeholder="Título do item"
+            minlength="15"
+            required
+          />
+          <textarea
+            id="task-description-input"
+            placeholder="Descrição do item"
+            minlength="30"
+            required
+          ></textarea>
+          <div class="inline">
+            <select id="task-assigned-to"></select>
+            <select id="task-status">
+              <option value="a_fazer">A fazer</option>
+              <option value="fazendo">Fazendo</option>
+              <option value="concluido">Concluído</option>
+            </select>
+          </div>
+          <button type="submit">Criar item</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="settings-modal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card modal-lg">
+        <div class="modal-head">
+          <h3>Configurações do projeto</h3>
+          <button id="close-settings-modal" type="button" class="btn-light">Fechar</button>
+        </div>
+
+        <div id="admin-config-area">
+          <form id="member-form">
+            <input type="email" id="member-email" placeholder="E-mail do membro" required />
+            <select id="member-role">
+              <option value="member">Usuário comum</option>
+              <option value="admin">Admin do projeto</option>
+            </select>
+            <button type="submit">Adicionar/Atualizar membro</button>
+          </form>
+
+          <form id="project-settings-form">
+            <input type="text" id="settings-project-name" placeholder="Nome do projeto" required />
+            <textarea
+              id="settings-project-description"
+              placeholder="Descrição do projeto"
+              minlength="30"
+              required
+            ></textarea>
+            <button type="submit">Salvar configurações</button>
+          </form>
+        </div>
+
+        <h3>Membros e permissões</h3>
+        <ul id="members-list" class="list"></ul>
+
+        <h3>Comentários do projeto</h3>
+        <form id="project-comment-form">
+          <textarea
+            id="project-comment-content"
+            placeholder="Escreva um comentário no projeto"
+            minlength="20"
+            required
+          ></textarea>
+          <button type="submit">Comentar no projeto</button>
+        </form>
+        <ul id="project-comments-list" class="list"></ul>
+      </div>
+    </section>
+
+    <button id="open-history" class="history-fab" type="button">Histórico de concluídos</button>
+
+    <section id="history-modal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-head">
+          <h3>Histórico de itens concluídos</h3>
+          <button id="close-history-modal" type="button" class="btn-light">Fechar</button>
+        </div>
+        <ul id="history-list" class="list"></ul>
+      </div>
+    </section>
+
+    <div id="toast"></div>
+    <script src="./form-feedback.js"></script>
+    <script src="./project.js"></script>
+  </body>
+</html>

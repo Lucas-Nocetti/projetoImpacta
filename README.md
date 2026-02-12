@@ -1,77 +1,146 @@
-# 🍲 Receitas Deliciosas  
-### Projeto da disciplina *Software Product: Analysis, Specification, Project & Implementation*
+# Task Manager
 
-Bem-vindo ao **Receitas Deliciosas** — um projeto desenvolvido como parte da disciplina de **Software Product: Analysis, Specification, Project & Implementation**.  
-O objetivo é aplicar conceitos de **análise, especificação, projeto e implementação de software** em um caso prático: um site de receitas simples, responsivo e otimizado. ✨
+Sistema web para gerenciamento de tarefas em equipe, desenvolvido como projeto de faculdade.
 
----
+## Visão geral
 
-## 🎯 Objetivos Acadêmicos
+O projeto foi construído com foco em um fluxo simples de uso:
 
-- Demonstrar aplicação de **boas práticas de desenvolvimento web**.  
-- Implementar **funcionalidades interativas** com HTML, CSS e JavaScript.  
-- Aplicar técnicas de **SEO e otimização de performance** (preload, lazy load).  
-- Estruturar o projeto com foco em **usabilidade e experiência do usuário**.  
-- Documentar o processo de forma clara e organizada.  
+1. usuário cria conta e faz login;
+2. cria ou acessa projetos em que participa;
+3. organiza itens do projeto em um quadro Kanban (`A fazer`, `Fazendo`, `Concluído`);
+4. comenta nos itens e no projeto;
+5. finaliza itens e consulta histórico de concluídos.
 
----
+Também existe controle de perfil por projeto:
 
-## 🚀 Funcionalidades
+- `admin`: gerencia configurações e membros;
+- `member`: atua nas tarefas e comentários.
 
-- 📌 **Banner inicial** com preload para carregamento rápido.  
-- 🍴 **Navbar interativa** com dropdown de perfil.  
-- 🥗 **Seção de receitas** com imagens em lazy load.  
-- 📖 **Storytelling** sobre o propósito do projeto.  
-- 🧾 **Rodapé completo** com informações de contato e CNPJ fictício.  
-- 🎨 Design responsivo e moderno.  
+## Tecnologias utilizadas
 
----
+- **Backend:** Node.js + Express
+- **Banco de dados:** SQLite
+- **Frontend:** HTML, CSS e JavaScript (vanilla)
+- **Autenticação:** JWT
 
-## 🛠️ Tecnologias Utilizadas
+## Como executar
 
-- **HTML5** → Estrutura semântica.  
-- **CSS3** → Estilização responsiva.  
-- **JavaScript** → Interatividade (menu hamburguer e dropdown).  
-- **Google Fonts (Poppins)** → Tipografia clean.  
+1. Instalar dependências:
 
----
+```bash
+npm install
+```
 
-## 📚 Storytelling
+2. (Opcional) criar arquivo de ambiente:
 
-> O projeto **Receitas Deliciosas** nasceu do desejo de tornar a culinária acessível a todos.  
-> Acreditamos que cozinhar é mais do que preparar alimentos: é criar memórias, compartilhar momentos e celebrar a vida.  
-> Cada receita aqui foi pensada para ser prática, saborosa e inspiradora. ❤️
+```bash
+copy .env.example .env
+```
 
----
+3. Iniciar aplicação:
 
-## 📂 Estrutura do Projeto
-📁 receitas-deliciosas
-┣ 📂 images
-┃ ┣ banner_home.jpg
-┃ ┣ bolo_chocolate.jpg
-┃ ┣ lasanha.jpg
-┃ ┗ salada.jpg
-┣ 📄 index.html
-┣ 📄 style.css
-┗ 📄 README.md
+```bash
+npm start
+```
 
-## 📞 Contato
+4. Acessar no navegador:
 
-- ✉️ Email: contato@receitasdeliciosas.com  
-- 📱 Telefone: (11) 1234-5678  
-- 📍 Endereço: Rua das Delícias, 123 - São Paulo/SP  
-- 🧾 **CNPJ (fictício): 12.AB3.4CD/56EF-78**
+```text
+http://localhost:3000/login
+```
 
----
+## Fluxo de telas
 
-## 🎓 Créditos
+- `/login` - autenticação de usuário
+- `/register` - cadastro de novo usuário
+- `/app` - listagem de projetos vinculados ao usuário
+- `/project?projectId=<id>` - quadro Kanban, comentários e gerenciamento do projeto
+- `/project-create` - criação de novo projeto
 
-Projeto desenvolvido para a disciplina **Software Product: Analysis, Specification, Project & Implementation**.  
-Feito com dedicação, criatividade e uma pitada de amor pela culinária. 🍰
+## Regras de permissão
 
----
+### Admin do projeto
 
-## 🌟 Licença
+- editar nome e descrição do projeto;
+- adicionar/remover membros;
+- alterar papel de membros (`admin` / `member`);
+- realizar todas as ações de membro.
 
-Este projeto é de uso **educacional** e não possui fins comerciais.  
-Sinta-se livre para explorar, aprender e se inspirar! ✨
+### Membro do projeto
+
+- visualizar projeto e quadro Kanban;
+- criar itens;
+- mover status dos itens;
+- comentar em itens e no projeto.
+
+## Regras de negócio principais
+
+- **Cadastro**
+  - nome completo com mínimo de 15 caracteres;
+  - e-mail em formato válido;
+  - senha com ao menos 1 maiúscula, 1 número e 1 caractere especial;
+  - bloqueio de e-mail e nome já cadastrados.
+
+- **Projeto**
+  - nome não pode ser duplicado;
+  - descrição com mínimo de 30 caracteres.
+
+- **Item**
+  - título com mínimo de 15 caracteres;
+  - descrição com mínimo de 30 caracteres.
+
+- **Comentários**
+  - mínimo de 20 caracteres.
+
+- **Finalização**
+  - ao clicar em `Concluir` em um item da coluna `Concluído`, ele sai do quadro;
+  - o item aparece no histórico de concluídos;
+  - somente itens com ação explícita de `Concluir` entram no histórico.
+
+## Endpoints principais
+
+### Auth
+
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+
+### Projetos
+
+- `GET /api/projects`
+- `POST /api/projects`
+- `GET /api/projects/:projectId`
+- `PATCH /api/projects/:projectId` (admin)
+- `POST /api/projects/:projectId/members` (admin)
+- `PATCH /api/projects/:projectId/members/:userId` (admin)
+- `DELETE /api/projects/:projectId/members/:userId` (admin)
+- `GET /api/projects/:projectId/comments`
+- `POST /api/projects/:projectId/comments`
+
+### Itens (tarefas)
+
+- `GET /api/tasks?projectId=1`
+- `GET /api/tasks/history?projectId=1`
+- `POST /api/tasks`
+- `PATCH /api/tasks/:taskId`
+- `GET /api/tasks/:taskId/comments`
+- `POST /api/tasks/:taskId/comments`
+
+## Estrutura de pastas (resumo)
+
+```text
+.
+├── public
+│   ├── app.html / app.js
+│   ├── project.html / project.js
+│   ├── login.html / login.js
+│   ├── register.html / register.js
+│   ├── project-create.html / project-create.js
+│   ├── styles.css
+│   └── form-feedback.js
+├── src
+│   ├── server.js
+│   ├── db.js
+│   └── middleware/auth.js
+└── database.sqlite
+```
