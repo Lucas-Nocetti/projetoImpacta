@@ -1,102 +1,120 @@
 # Task Manager
 
-Sistema web para gerenciamento de tarefas em equipe, desenvolvido como projeto de faculdade.
+Sistema web de gerenciamento de tarefas em equipe, feito para trabalho de faculdade.
 
-## Visão geral
+## O que o sistema faz
 
-O projeto foi construído com foco em um fluxo simples de uso:
+O Task Manager organiza o trabalho por projetos, com quadro Kanban e controle de permissoes.
 
-1. usuário cria conta e faz login;
-2. cria ou acessa projetos em que participa;
-3. organiza itens do projeto em um quadro Kanban (`A fazer`, `Fazendo`, `Concluído`);
-4. comenta nos itens e no projeto;
-5. finaliza itens e consulta histórico de concluídos.
+Fluxo principal:
 
-Também existe controle de perfil por projeto:
+1. usuario cria conta e faz login;
+2. entra na tela de projetos vinculados;
+3. abre um projeto e acompanha os itens em colunas;
+4. comenta no projeto e nos itens;
+5. move itens de status e conclui definitivamente quando necessario.
 
-- `admin`: gerencia configurações e membros;
-- `member`: atua nas tarefas e comentários.
+## Tecnologias
 
-## Tecnologias utilizadas
-
-- **Backend:** Node.js + Express
-- **Banco de dados:** SQLite
-- **Frontend:** HTML, CSS e JavaScript (vanilla)
-- **Autenticação:** JWT
+- Backend: Node.js + Express
+- Banco: SQLite
+- Frontend: HTML + CSS + JavaScript (vanilla)
+- Autenticacao: JWT
 
 ## Como executar
 
-1. Instalar dependências:
+1. Instalar dependencias:
 
 ```bash
 npm install
 ```
 
-2. (Opcional) criar arquivo de ambiente:
+2. Copiar variaveis de ambiente (opcional):
 
 ```bash
 copy .env.example .env
 ```
 
-3. Iniciar aplicação:
+3. Iniciar servidor:
 
 ```bash
 npm start
 ```
 
-4. Acessar no navegador:
+4. Acessar:
 
 ```text
 http://localhost:3000/login
 ```
 
-## Fluxo de telas
+## Rotas de tela
 
-- `/login` - autenticação de usuário
-- `/register` - cadastro de novo usuário
-- `/app` - listagem de projetos vinculados ao usuário
-- `/project?projectId=<id>` - quadro Kanban, comentários e gerenciamento do projeto
-- `/project-create` - criação de novo projeto
+- `/login` - login
+- `/register` - cadastro
+- `/app` - dashboard de projetos
+- `/project?projectId=<id>` - quadro do projeto (kanban, comentarios e configuracoes)
+- `/project-create` - criacao de projeto
 
-## Regras de permissão
+## Perfis e permissoes
 
 ### Admin do projeto
 
-- editar nome e descrição do projeto;
-- adicionar/remover membros;
-- alterar papel de membros (`admin` / `member`);
-- realizar todas as ações de membro.
+- editar nome e descricao do projeto;
+- adicionar, remover e alterar papel de membros;
+- criar, editar e remover itens;
+- alterar responsavel dos itens;
+- comentar e moderar comentarios (pode remover comentarios de outros usuarios).
 
 ### Membro do projeto
 
-- visualizar projeto e quadro Kanban;
-- criar itens;
-- mover status dos itens;
-- comentar em itens e no projeto.
+- visualizar projeto e itens;
+- criar e mover itens;
+- comentar no projeto e nos itens;
+- editar/remover apenas os proprios comentarios.
 
-## Regras de negócio principais
+## Regras de validacao
 
-- **Cadastro**
-  - nome completo com mínimo de 15 caracteres;
-  - e-mail em formato válido;
-  - senha com ao menos 1 maiúscula, 1 número e 1 caractere especial;
-  - bloqueio de e-mail e nome já cadastrados.
+### Cadastro
 
-- **Projeto**
-  - nome não pode ser duplicado;
-  - descrição com mínimo de 30 caracteres.
+- nome completo com minimo de 15 caracteres;
+- e-mail em formato valido;
+- senha com pelo menos 1 letra maiuscula, 1 numero e 1 caractere especial;
+- bloqueio de e-mail e nome duplicados.
 
-- **Item**
-  - título com mínimo de 15 caracteres;
-  - descrição com mínimo de 30 caracteres.
+### Projeto
 
-- **Comentários**
-  - mínimo de 20 caracteres.
+- nome nao pode ser duplicado;
+- descricao com minimo de 30 caracteres.
 
-- **Finalização**
-  - ao clicar em `Concluir` em um item da coluna `Concluído`, ele sai do quadro;
-  - o item aparece no histórico de concluídos;
-  - somente itens com ação explícita de `Concluir` entram no histórico.
+### Item
+
+- titulo com minimo de 15 caracteres;
+- descricao com minimo de 30 caracteres.
+
+### Comentario
+
+- minimo de 20 caracteres;
+- tipos: `anotacao`, `melhoria`, `bug`, `bloqueado`.
+
+## Funcionalidades implementadas
+
+- login e cadastro em telas separadas;
+- dashboard com cards de projetos vinculados;
+- menu de 3 pontos no card do projeto (configuracoes e excluir);
+- configuracoes do projeto direto no dashboard, sem redirecionar para dentro do projeto;
+- modal de confirmacao para excluir projeto;
+- modal de confirmacao para remover membro do projeto (dashboard e tela interna do projeto);
+- quadro Kanban com drag and drop;
+- criacao de item por coluna;
+- menu de 3 pontos no card do item (editar e excluir);
+- modal de confirmacao para excluir item;
+- edicao de item (titulo, descricao, responsavel e status);
+- modal de confirmacao ao mover para `Concluido` ou concluir definitivamente itens com flags `bug` e/ou `bloqueado`;
+- finalizacao definitiva de item com envio para historico;
+- comentarios no projeto e no item com tipo e horario;
+- edicao inline de comentarios (sem prompt nativo do navegador);
+- marcacao visual no card quando existe comentario de `bug` ou `bloqueado`;
+- acoes com `aria-label` e `title` para acessibilidade.
 
 ## Endpoints principais
 
@@ -110,37 +128,43 @@ http://localhost:3000/login
 - `GET /api/projects`
 - `POST /api/projects`
 - `GET /api/projects/:projectId`
-- `PATCH /api/projects/:projectId` (admin)
-- `POST /api/projects/:projectId/members` (admin)
-- `PATCH /api/projects/:projectId/members/:userId` (admin)
-- `DELETE /api/projects/:projectId/members/:userId` (admin)
+- `PATCH /api/projects/:projectId`
+- `DELETE /api/projects/:projectId`
+- `POST /api/projects/:projectId/members`
+- `PATCH /api/projects/:projectId/members/:userId`
+- `DELETE /api/projects/:projectId/members/:userId`
 - `GET /api/projects/:projectId/comments`
 - `POST /api/projects/:projectId/comments`
+- `PATCH /api/projects/:projectId/comments/:commentId`
+- `DELETE /api/projects/:projectId/comments/:commentId`
 
-### Itens (tarefas)
+### Itens
 
 - `GET /api/tasks?projectId=1`
 - `GET /api/tasks/history?projectId=1`
 - `POST /api/tasks`
 - `PATCH /api/tasks/:taskId`
+- `DELETE /api/tasks/:taskId`
 - `GET /api/tasks/:taskId/comments`
 - `POST /api/tasks/:taskId/comments`
+- `PATCH /api/tasks/:taskId/comments/:commentId`
+- `DELETE /api/tasks/:taskId/comments/:commentId`
 
-## Estrutura de pastas (resumo)
+## Estrutura de pastas
 
 ```text
 .
-├── public
-│   ├── app.html / app.js
-│   ├── project.html / project.js
-│   ├── login.html / login.js
-│   ├── register.html / register.js
-│   ├── project-create.html / project-create.js
-│   ├── styles.css
-│   └── form-feedback.js
-├── src
-│   ├── server.js
-│   ├── db.js
-│   └── middleware/auth.js
-└── database.sqlite
+|-- public
+|   |-- app.html / app.js
+|   |-- project.html / project.js
+|   |-- login.html / login.js
+|   |-- register.html / register.js
+|   |-- project-create.html / project-create.js
+|   |-- styles.css
+|   `-- form-feedback.js
+|-- src
+|   |-- server.js
+|   |-- db.js
+|   `-- middleware/auth.js
+`-- database.sqlite
 ```

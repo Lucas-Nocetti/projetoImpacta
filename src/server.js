@@ -16,6 +16,8 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/;
 const ALLOWED_STATUS = ["a_fazer", "fazendo", "concluido"];
 const ALLOWED_ROLES = ["admin", "member"];
+const ALLOWED_COMMENT_TYPES = ["bug", "melhoria", "anotacao", "bloqueado"];
+const SQL_NOW_BR = "CURRENT_TIMESTAMP";
 
 app.use(cors());
 app.use(express.json());
@@ -109,7 +111,7 @@ app.post("/api/auth/register", async (req, res) => {
 
     const passwordHash = await bcrypt.hash(password, 10);
     const result = await db.run(
-      `INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)`,
+      `INSERT INTO users (name, email, password_hash, created_at) VALUES (?, ?, ?, ${SQL_NOW_BR})`,
       [name, email, passwordHash]
     );
 
@@ -195,12 +197,12 @@ app.post("/api/projects", authMiddleware, async (req, res) => {
     if (existingProject) return res.status(409).json({ message: "Ja existe um projeto com esse nome." });
 
     const result = await db.run(
-      `INSERT INTO projects (name, description, owner_id) VALUES (?, ?, ?)`,
+      `INSERT INTO projects (name, description, owner_id, created_at) VALUES (?, ?, ?, ${SQL_NOW_BR})`,
       [name, description, req.user.id]
     );
 
     await db.run(
-      `INSERT INTO project_members (project_id, user_id, role) VALUES (?, ?, 'admin')`,
+      `INSERT INTO project_members (project_id, user_id, role, created_at) VALUES (?, ?, 'admin', ${SQL_NOW_BR})`,
       [result.lastID, req.user.id]
     );
 
@@ -271,6 +273,15 @@ app.patch("/api/projects/:projectId", authMiddleware, requireMembership, require
   }
 });
 
+app.delete("/api/projects/:projectId", authMiddleware, requireMembership, requireAdmin, async (req, res) => {
+  try {
+    await db.run(`DELETE FROM projects WHERE id = ?`, [req.projectId]);
+    return res.json({ message: "Projeto excluido com sucesso." });
+  } catch (error) {
+    return res.status(500).json({ message: "Erro ao excluir projeto." });
+  }
+});
+
 app.post(
   "/api/projects/:projectId/members",
   authMiddleware,
@@ -289,7 +300,7 @@ app.post(
       if (!user) return res.status(404).json({ message: "E-mail nao encontrado na base." });
 
       await db.run(
-        `INSERT INTO project_members (project_id, user_id, role) VALUES (?, ?, ?)
+        `INSERT INTO project_members (project_id, user_id, role, created_at) VALUES (?, ?, ?, ${SQL_NOW_BR})
          ON CONFLICT(project_id, user_id) DO UPDATE SET role = excluded.role`,
         [req.projectId, user.id, role]
       );
@@ -371,7 +382,13 @@ app.get("/api/projects/:projectId/comments", authMiddleware, requireMembership, 
   try {
     const comments = await db.all(
       `
-      SELECT pc.id, pc.content, pc.created_at AS createdAt, u.id AS userId, u.name AS userName
+      SELECT
+        pc.id,
+        pc.content,
+        pc.type,
+        pc.created_at AS createdAt,
+        u.id AS userId,
+        u.name AS userName
       FROM project_comments pc
       INNER JOIN users u ON u.id = pc.user_id
       WHERE pc.project_id = ?
@@ -388,17 +405,27 @@ app.get("/api/projects/:projectId/comments", authMiddleware, requireMembership, 
 app.post("/api/projects/:projectId/comments", authMiddleware, requireMembership, async (req, res) => {
   try {
     const content = normalizeText(req.body.content);
+    const type = normalizeText(req.body.type || "anotacao");
     if (!hasMinLength(content, 20)) {
       return res.status(400).json({ message: "Comentario deve ter no minimo 20 caracteres." });
     }
+    if (!ALLOWED_COMMENT_TYPES.includes(type)) {
+      return res.status(400).json({ message: "Tipo de comentario invalido." });
+    }
 
     const result = await db.run(
-      `INSERT INTO project_comments (project_id, user_id, content) VALUES (?, ?, ?)`,
-      [req.projectId, req.user.id, content]
+      `INSERT INTO project_comments (project_id, user_id, content, type, created_at) VALUES (?, ?, ?, ?, ${SQL_NOW_BR})`,
+      [req.projectId, req.user.id, content, type]
     );
     const comment = await db.get(
       `
-      SELECT pc.id, pc.content, pc.created_at AS createdAt, u.id AS userId, u.name AS userName
+      SELECT
+        pc.id,
+        pc.content,
+        pc.type,
+        pc.created_at AS createdAt,
+        u.id AS userId,
+        u.name AS userName
       FROM project_comments pc
       INNER JOIN users u ON u.id = pc.user_id
       WHERE pc.id = ?
@@ -410,6 +437,85 @@ app.post("/api/projects/:projectId/comments", authMiddleware, requireMembership,
     return res.status(500).json({ message: "Erro ao criar comentario do projeto." });
   }
 });
+
+app.patch("/api/projects/:projectId/comments/:commentId", authMiddleware, requireMembership, async (req, res) => {
+  try {
+    const commentId = Number(req.params.commentId);
+    const content = normalizeText(req.body.content);
+    const typeRaw = Object.prototype.hasOwnProperty.call(req.body, "type")
+      ? normalizeText(req.body.type)
+      : null;
+    if (!commentId) return res.status(400).json({ message: "commentId invalido." });
+    if (!hasMinLength(content, 20)) {
+      return res.status(400).json({ message: "Comentario deve ter no minimo 20 caracteres." });
+    }
+    if (typeRaw !== null && !ALLOWED_COMMENT_TYPES.includes(typeRaw)) {
+      return res.status(400).json({ message: "Tipo de comentario invalido." });
+    }
+
+    const existing = await db.get(
+      `SELECT id, project_id AS projectId, user_id AS userId, type FROM project_comments WHERE id = ? AND project_id = ?`,
+      [commentId, req.projectId]
+    );
+    if (!existing) return res.status(404).json({ message: "Comentario nao encontrado." });
+    if (existing.userId !== req.user.id) {
+      return res.status(403).json({ message: "Apenas o autor pode editar esse comentario." });
+    }
+
+    await db.run(`UPDATE project_comments SET content = ?, type = ? WHERE id = ?`, [
+      content,
+      typeRaw || existing.type,
+      commentId
+    ]);
+
+    const updated = await db.get(
+      `
+      SELECT
+        pc.id,
+        pc.content,
+        pc.type,
+        pc.created_at AS createdAt,
+        u.id AS userId,
+        u.name AS userName
+      FROM project_comments pc
+      INNER JOIN users u ON u.id = pc.user_id
+      WHERE pc.id = ?
+      `,
+      [commentId]
+    );
+    return res.json(updated);
+  } catch (error) {
+    return res.status(500).json({ message: "Erro ao editar comentario do projeto." });
+  }
+});
+
+app.delete(
+  "/api/projects/:projectId/comments/:commentId",
+  authMiddleware,
+  requireMembership,
+  async (req, res) => {
+    try {
+      const commentId = Number(req.params.commentId);
+      if (!commentId) return res.status(400).json({ message: "commentId invalido." });
+
+      const existing = await db.get(
+        `SELECT id, project_id AS projectId, user_id AS userId FROM project_comments WHERE id = ? AND project_id = ?`,
+        [commentId, req.projectId]
+      );
+      if (!existing) return res.status(404).json({ message: "Comentario nao encontrado." });
+
+      const canDelete = existing.userId === req.user.id || req.membership.role === "admin";
+      if (!canDelete) {
+        return res.status(403).json({ message: "Sem permissao para remover esse comentario." });
+      }
+
+      await db.run(`DELETE FROM project_comments WHERE id = ?`, [commentId]);
+      return res.json({ message: "Comentario removido com sucesso." });
+    } catch (error) {
+      return res.status(500).json({ message: "Erro ao remover comentario do projeto." });
+    }
+  }
+);
 
 app.get("/api/tasks", authMiddleware, requireMembership, async (req, res) => {
   try {
@@ -437,6 +543,8 @@ app.get("/api/tasks", authMiddleware, requireMembership, async (req, res) => {
         t.title,
         t.description,
         t.status,
+        EXISTS(SELECT 1 FROM comments c_bug WHERE c_bug.task_id = t.id AND c_bug.type = 'bug') AS hasBugComment,
+        EXISTS(SELECT 1 FROM comments c_block WHERE c_block.task_id = t.id AND c_block.type = 'bloqueado') AS hasBlockedComment,
         COALESCE(t.finalized, 0) AS finalized,
         t.finalized_at AS finalizedAt,
         t.assigned_to AS assignedTo,
@@ -524,8 +632,8 @@ app.post("/api/tasks", authMiddleware, requireMembership, async (req, res) => {
 
     const result = await db.run(
       `
-      INSERT INTO tasks (project_id, title, description, assigned_to, status, created_by)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO tasks (project_id, title, description, assigned_to, status, created_by, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ${SQL_NOW_BR}, ${SQL_NOW_BR})
       `,
       [req.projectId, title, description, parsedAssignedTo, taskStatus, req.user.id]
     );
@@ -627,11 +735,11 @@ app.patch("/api/tasks/:taskId", authMiddleware, async (req, res) => {
         assigned_to = CASE WHEN ? = 1 THEN ? ELSE assigned_to END,
         finalized = CASE WHEN ? = 1 THEN ? ELSE COALESCE(finalized, 0) END,
         finalized_at = CASE
-          WHEN ? = 1 AND ? = 1 THEN CURRENT_TIMESTAMP
+          WHEN ? = 1 AND ? = 1 THEN ${SQL_NOW_BR}
           WHEN ? = 1 AND ? = 0 THEN NULL
           ELSE finalized_at
         END,
-        updated_at = CURRENT_TIMESTAMP
+        updated_at = ${SQL_NOW_BR}
       WHERE id = ?
       `,
       [
@@ -680,6 +788,27 @@ app.patch("/api/tasks/:taskId", authMiddleware, async (req, res) => {
   }
 });
 
+app.delete("/api/tasks/:taskId", authMiddleware, async (req, res) => {
+  try {
+    const taskId = Number(req.params.taskId);
+    if (!taskId) return res.status(400).json({ message: "taskId invalido." });
+
+    const task = await db.get(`SELECT id, project_id AS projectId FROM tasks WHERE id = ?`, [taskId]);
+    if (!task) return res.status(404).json({ message: "Tarefa nao encontrada." });
+
+    const membership = await getProjectMembership(task.projectId, req.user.id);
+    if (!membership) return res.status(403).json({ message: "Voce nao faz parte desse projeto." });
+    if (membership.role !== "admin") {
+      return res.status(403).json({ message: "Apenas admins podem excluir itens." });
+    }
+
+    await db.run(`DELETE FROM tasks WHERE id = ?`, [taskId]);
+    return res.json({ message: "Item excluido com sucesso." });
+  } catch (error) {
+    return res.status(500).json({ message: "Erro ao excluir item." });
+  }
+});
+
 app.get("/api/tasks/:taskId/comments", authMiddleware, async (req, res) => {
   try {
     const taskId = Number(req.params.taskId);
@@ -693,7 +822,7 @@ app.get("/api/tasks/:taskId/comments", authMiddleware, async (req, res) => {
 
     const comments = await db.all(
       `
-      SELECT c.id, c.content, c.created_at AS createdAt, u.id AS userId, u.name AS userName
+      SELECT c.id, c.content, c.type, c.created_at AS createdAt, u.id AS userId, u.name AS userName
       FROM comments c
       INNER JOIN users u ON u.id = c.user_id
       WHERE c.task_id = ?
@@ -712,9 +841,13 @@ app.post("/api/tasks/:taskId/comments", authMiddleware, async (req, res) => {
   try {
     const taskId = Number(req.params.taskId);
     const content = normalizeText(req.body.content);
+    const type = normalizeText(req.body.type || "anotacao");
     if (!taskId || !content) return res.status(400).json({ message: "taskId e content sao obrigatorios." });
     if (!hasMinLength(content, 20)) {
       return res.status(400).json({ message: "Comentario deve ter no minimo 20 caracteres." });
+    }
+    if (!ALLOWED_COMMENT_TYPES.includes(type)) {
+      return res.status(400).json({ message: "Tipo de comentario invalido." });
     }
 
     const task = await db.get(`SELECT id, project_id FROM tasks WHERE id = ?`, [taskId]);
@@ -723,15 +856,14 @@ app.post("/api/tasks/:taskId/comments", authMiddleware, async (req, res) => {
     const membership = await getProjectMembership(task.project_id, req.user.id);
     if (!membership) return res.status(403).json({ message: "Voce nao faz parte desse projeto." });
 
-    const result = await db.run(`INSERT INTO comments (task_id, user_id, content) VALUES (?, ?, ?)`, [
-      taskId,
-      req.user.id,
-      content
-    ]);
+    const result = await db.run(
+      `INSERT INTO comments (task_id, user_id, content, type, created_at) VALUES (?, ?, ?, ?, ${SQL_NOW_BR})`,
+      [taskId, req.user.id, content, type]
+    );
 
     const comment = await db.get(
       `
-      SELECT c.id, c.content, c.created_at AS createdAt, u.id AS userId, u.name AS userName
+      SELECT c.id, c.content, c.type, c.created_at AS createdAt, u.id AS userId, u.name AS userName
       FROM comments c
       INNER JOIN users u ON u.id = c.user_id
       WHERE c.id = ?
@@ -742,6 +874,92 @@ app.post("/api/tasks/:taskId/comments", authMiddleware, async (req, res) => {
     return res.status(201).json(comment);
   } catch (error) {
     return res.status(500).json({ message: "Erro ao criar comentario." });
+  }
+});
+
+app.patch("/api/tasks/:taskId/comments/:commentId", authMiddleware, async (req, res) => {
+  try {
+    const taskId = Number(req.params.taskId);
+    const commentId = Number(req.params.commentId);
+    const content = normalizeText(req.body.content);
+    const typeRaw = Object.prototype.hasOwnProperty.call(req.body, "type")
+      ? normalizeText(req.body.type)
+      : null;
+    if (!taskId || !commentId) {
+      return res.status(400).json({ message: "taskId e commentId sao obrigatorios." });
+    }
+    if (!hasMinLength(content, 20)) {
+      return res.status(400).json({ message: "Comentario deve ter no minimo 20 caracteres." });
+    }
+    if (typeRaw !== null && !ALLOWED_COMMENT_TYPES.includes(typeRaw)) {
+      return res.status(400).json({ message: "Tipo de comentario invalido." });
+    }
+
+    const task = await db.get(`SELECT id, project_id FROM tasks WHERE id = ?`, [taskId]);
+    if (!task) return res.status(404).json({ message: "Tarefa nao encontrada." });
+
+    const membership = await getProjectMembership(task.project_id, req.user.id);
+    if (!membership) return res.status(403).json({ message: "Voce nao faz parte desse projeto." });
+
+    const existing = await db.get(
+      `SELECT id, task_id AS taskId, user_id AS userId, type FROM comments WHERE id = ? AND task_id = ?`,
+      [commentId, taskId]
+    );
+    if (!existing) return res.status(404).json({ message: "Comentario nao encontrado." });
+    if (existing.userId !== req.user.id) {
+      return res.status(403).json({ message: "Apenas o autor pode editar esse comentario." });
+    }
+
+    await db.run(`UPDATE comments SET content = ?, type = ? WHERE id = ?`, [
+      content,
+      typeRaw || existing.type,
+      commentId
+    ]);
+
+    const updated = await db.get(
+      `
+      SELECT c.id, c.content, c.type, c.created_at AS createdAt, u.id AS userId, u.name AS userName
+      FROM comments c
+      INNER JOIN users u ON u.id = c.user_id
+      WHERE c.id = ?
+      `,
+      [commentId]
+    );
+    return res.json(updated);
+  } catch (error) {
+    return res.status(500).json({ message: "Erro ao editar comentario." });
+  }
+});
+
+app.delete("/api/tasks/:taskId/comments/:commentId", authMiddleware, async (req, res) => {
+  try {
+    const taskId = Number(req.params.taskId);
+    const commentId = Number(req.params.commentId);
+    if (!taskId || !commentId) {
+      return res.status(400).json({ message: "taskId e commentId sao obrigatorios." });
+    }
+
+    const task = await db.get(`SELECT id, project_id FROM tasks WHERE id = ?`, [taskId]);
+    if (!task) return res.status(404).json({ message: "Tarefa nao encontrada." });
+
+    const membership = await getProjectMembership(task.project_id, req.user.id);
+    if (!membership) return res.status(403).json({ message: "Voce nao faz parte desse projeto." });
+
+    const existing = await db.get(
+      `SELECT id, task_id AS taskId, user_id AS userId FROM comments WHERE id = ? AND task_id = ?`,
+      [commentId, taskId]
+    );
+    if (!existing) return res.status(404).json({ message: "Comentario nao encontrado." });
+
+    const canDelete = existing.userId === req.user.id || membership.role === "admin";
+    if (!canDelete) {
+      return res.status(403).json({ message: "Sem permissao para remover esse comentario." });
+    }
+
+    await db.run(`DELETE FROM comments WHERE id = ?`, [commentId]);
+    return res.json({ message: "Comentario removido com sucesso." });
+  } catch (error) {
+    return res.status(500).json({ message: "Erro ao remover comentario." });
   }
 });
 

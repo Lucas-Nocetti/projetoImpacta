@@ -44,7 +44,10 @@ async function request(path, options = {}) {
 
 function renderSession() {
   sessionArea.innerHTML = `
-    <span>${state.user?.name || ""} (${state.user?.email || ""})</span>
+    <div class="session-user">
+      <span class="session-name">${state.user?.name || ""}</span>
+      <span class="session-email">${state.user?.email || ""}</span>
+    </div>
     <button id="logout-btn" class="danger">Sair</button>
   `;
   document.getElementById("logout-btn").addEventListener("click", clearSession);

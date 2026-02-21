@@ -33,6 +33,82 @@
       </section>
     </main>
 
+    <section id="project-settings-modal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card modal-lg">
+        <div class="modal-head">
+          <h3 id="project-settings-title">Configurações do projeto</h3>
+          <button id="close-project-settings-modal" type="button" class="btn-light btn-icon" aria-label="Fechar" title="Fechar">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 6L18 18M18 6L6 18"></path>
+            </svg>
+          </button>
+        </div>
+
+        <form id="project-settings-form-app">
+          <input type="text" id="project-settings-name-app" placeholder="Nome do projeto" required />
+          <textarea
+            id="project-settings-description-app"
+            placeholder="Descrição do projeto"
+            minlength="30"
+            required
+          ></textarea>
+          <button type="submit" title="Salvar configurações do projeto">Salvar configurações</button>
+        </form>
+
+        <form id="project-member-form-app">
+          <input type="email" id="project-member-email-app" placeholder="E-mail do membro" required />
+          <select id="project-member-role-app" aria-label="Papel do membro">
+            <option value="member">Usuário comum</option>
+            <option value="admin">Admin do projeto</option>
+          </select>
+          <button type="submit" title="Adicionar ou atualizar membro">Adicionar/Atualizar membro</button>
+        </form>
+
+        <h3>Membros e permissões</h3>
+        <ul id="project-members-list-app" class="list"></ul>
+      </div>
+    </section>
+
+    <section id="delete-project-modal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-head">
+          <h3>Confirmar exclusão</h3>
+          <button id="close-delete-project-modal" type="button" class="btn-light btn-icon" aria-label="Fechar" title="Fechar">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 6L18 18M18 6L6 18"></path>
+            </svg>
+          </button>
+        </div>
+        <p id="delete-project-message">Tem certeza que deseja excluir este projeto?</p>
+        <div class="inline-actions">
+          <button id="cancel-delete-project" type="button" class="btn-light" title="Cancelar exclusão">Cancelar</button>
+          <button id="confirm-delete-project" type="button" class="danger" title="Confirmar exclusão do projeto">
+            Excluir projeto
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section id="delete-member-modal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-head">
+          <h3>Confirmar remoção de membro</h3>
+          <button id="close-delete-member-modal" type="button" class="btn-light btn-icon" aria-label="Fechar" title="Fechar">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 6L18 18M18 6L6 18"></path>
+            </svg>
+          </button>
+        </div>
+        <p id="delete-member-message">Tem certeza que deseja remover este membro do projeto?</p>
+        <div class="inline-actions">
+          <button id="cancel-delete-member" type="button" class="btn-light" title="Cancelar remoção">Cancelar</button>
+          <button id="confirm-delete-member" type="button" class="danger" title="Confirmar remoção do membro">
+            Remover membro
+          </button>
+        </div>
+      </div>
+    </section>
+
     <div id="toast"></div>
     <script src="./form-feedback.js"></script>
     <script src="./app.js"></script>
