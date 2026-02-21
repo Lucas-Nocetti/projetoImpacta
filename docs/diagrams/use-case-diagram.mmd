@@ -1,0 +1,27 @@
+﻿flowchart LR
+  U[Usuário autenticado]
+  A[Admin do projeto]
+
+  U --> UC1[Visualizar projetos vinculados]
+  U --> UC2[Acessar quadro Kanban]
+  U --> UC3[Criar tarefa]
+  U --> UC4[Movimentar tarefa entre colunas]
+  U --> UC5[Comentar em tarefa]
+  U --> UC6[Comentar no projeto]
+  U --> UC7[Editar/excluir próprio comentário]
+  U --> UC8[Concluir tarefa definitivamente]
+  U --> UC9[Consultar histórico de concluídos]
+
+  A --> UC10[Gerenciar membros do projeto]
+  A --> UC11[Editar configurações do projeto]
+  A --> UC12[Editar tarefa]
+  A --> UC13[Excluir tarefa]
+  A --> UC14[Excluir projeto]
+  A --> UC15[Excluir comentário de outros usuários]
+
+  UC10 --> UC10a[Adicionar membro]
+  UC10 --> UC10b[Alterar papel]
+  UC10 --> UC10c[Remover membro com confirmação]
+
+  UC8 --> UC8a[Validar flags bug/bloqueado]
+  UC8a --> UC8b[Exibir modal de confirmação]

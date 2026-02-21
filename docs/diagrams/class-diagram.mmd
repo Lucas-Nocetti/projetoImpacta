@@ -1,0 +1,67 @@
+﻿classDiagram
+direction LR
+
+class User {
+  +id: number
+  +name: string
+  +email: string
+  +passwordHash: string
+  +createdAt: datetime
+}
+
+class Project {
+  +id: number
+  +name: string
+  +description: string
+  +createdAt: datetime
+}
+
+class ProjectMember {
+  +id: number
+  +projectId: number
+  +userId: number
+  +role: "admin" | "member"
+  +createdAt: datetime
+}
+
+class Task {
+  +id: number
+  +projectId: number
+  +title: string
+  +description: string
+  +status: "a_fazer" | "fazendo" | "concluido"
+  +assignedTo: number?
+  +finalized: boolean
+  +finalizedAt: datetime?
+  +createdAt: datetime
+}
+
+class Comment {
+  +id: number
+  +type: "anotacao" | "melhoria" | "bug" | "bloqueado"
+  +content: string
+  +createdAt: datetime
+}
+
+class ProjectComment {
+  +projectId: number
+  +userId: number
+}
+
+class TaskComment {
+  +taskId: number
+  +userId: number
+}
+
+User "1" --> "0..*" ProjectMember : participa
+Project "1" --> "0..*" ProjectMember : possui
+Project "1" --> "0..*" Task : possui
+User "1" --> "0..*" Task : pode ser responsavel
+
+Comment <|-- ProjectComment
+Comment <|-- TaskComment
+
+Project "1" --> "0..*" ProjectComment : comentarios
+Task "1" --> "0..*" TaskComment : comentarios
+User "1" --> "0..*" ProjectComment : escreve
+User "1" --> "0..*" TaskComment : escreve
