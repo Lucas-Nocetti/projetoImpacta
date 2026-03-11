@@ -15,7 +15,8 @@ const state = {
   taskPendingDelete: null,
   editingTaskId: null,
   memberPendingDelete: null,
-  blockingConfirmResolver: null
+  blockingConfirmResolver: null,
+  lastFocusedElement: null
 };
 const DRAG_TASK_MIME = "application/x-task-id";
 
@@ -84,7 +85,11 @@ const elements = {
   projectCommentForm: document.getElementById("project-comment-form"),
   projectCommentType: document.getElementById("project-comment-type"),
   projectCommentContent: document.getElementById("project-comment-content"),
-  projectCommentsList: document.getElementById("project-comments-list")
+  projectCommentsList: document.getElementById("project-comments-list"),
+  logoutModal: document.getElementById("logout-modal"),
+  closeLogoutModal: document.getElementById("close-logout-modal"),
+  cancelLogout: document.getElementById("cancel-logout"),
+  confirmLogout: document.getElementById("confirm-logout")
 };
 
 function normalize(value) {
@@ -102,9 +107,9 @@ function formatDateTime(value) {
   if (!value) return "-";
   const sqliteDateTimePattern = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
   if (sqliteDateTimePattern.test(value)) {
-    const utcDate = new Date(value.replace(" ", "T") + "Z");
-    if (!Number.isNaN(utcDate.getTime())) {
-      return utcDate.toLocaleString("pt-BR", {
+    const brtDate = new Date(value.replace(" ", "T") + "-03:00");
+    if (!Number.isNaN(brtDate.getTime())) {
+      return brtDate.toLocaleString("pt-BR", {
         dateStyle: "short",
         timeStyle: "short",
         timeZone: "America/Sao_Paulo"
@@ -137,9 +142,12 @@ function clearSession() {
 }
 
 function openModal(modal) {
+  state.lastFocusedElement = document.activeElement;
   modal.classList.remove("hidden");
   modal.setAttribute("aria-hidden", "false");
   document.body.classList.add("modal-open");
+  const firstFocusable = modal.querySelector("button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])");
+  if (firstFocusable) firstFocusable.focus();
 }
 
 function closeModal(modal) {
@@ -147,6 +155,9 @@ function closeModal(modal) {
   modal.setAttribute("aria-hidden", "true");
   if (document.querySelectorAll(".modal-overlay:not(.hidden)").length === 0) {
     document.body.classList.remove("modal-open");
+    if (state.lastFocusedElement && typeof state.lastFocusedElement.focus === "function") {
+      state.lastFocusedElement.focus();
+    }
   }
 }
 
@@ -169,7 +180,7 @@ function renderSession() {
     </div>
     <button id="logout-btn" class="danger" aria-label="Encerrar sess\u00e3o" title="Encerrar sess\u00e3o">Sair</button>
   `;
-  document.getElementById("logout-btn").addEventListener("click", clearSession);
+  document.getElementById("logout-btn").addEventListener("click", () => openModal(elements.logoutModal));
 }
 
 function renderProjectHeader() {
@@ -203,7 +214,7 @@ function renderMembers() {
       <span class="${roleBadgeClass(member.role)}">${member.role === "admin" ? "Admin" : "Usu\u00e1rio"}</span>
     `;
 
-    if (state.project.role === "admin" && member.id !== state.user.id) {
+    if (state.project?.role === "admin" && member.id !== state.user?.id) {
       const toggleRoleButton = document.createElement("button");
       toggleRoleButton.type = "button";
       toggleRoleButton.textContent = member.role === "admin" ? "Tornar usu\u00e1rio" : "Tornar admin";
@@ -290,8 +301,8 @@ function hasBlockingFlags(task) {
 
 function blockingFlagsLabel(task) {
   const labels = [];
-  if (Number(task?.hasBlockedComment) > 0) labels.push("blocker");
-  if (Number(task?.hasBugComment) > 0) labels.push("bug");
+  if (Number(task.hasBlockedComment) > 0) labels.push("blocker");
+  if (Number(task.hasBugComment) > 0) labels.push("bug");
   if (!labels.length) return "";
   if (labels.length === 1) return labels[0];
   return `${labels[0]} e ${labels[1]}`;
@@ -316,7 +327,7 @@ async function confirmBlockedOrBugConclusion(task) {
     state.blockingConfirmResolver = null;
   }
   const labels = blockingFlagsLabel(task);
-  elements.blockingConfirmMessage.textContent = `O card possui ${labels} vinculado. Deseja concluir mesmo assim?`;
+  elements.blockingConfirmMessage.textContent = `O card possui ${labels} vinculado. Deseja concluir mesmo assim`;
   openModal(elements.blockingConfirmModal);
   return new Promise((resolve) => {
     state.blockingConfirmResolver = resolve;
@@ -390,7 +401,7 @@ function resetDeleteTaskModal() {
 
 function openDeleteMemberModal(member) {
   state.memberPendingDelete = { id: member.id, name: member.name };
-  elements.deleteMemberMessage.textContent = `Tem certeza que deseja remover "${member.name}" deste projeto?`;
+  elements.deleteMemberMessage.textContent = `Tem certeza que deseja remover "${member.name}" deste projeto`;
   openModal(elements.deleteMemberModal);
 }
 
@@ -459,7 +470,7 @@ function buildTaskCard(task) {
   });
   tools.appendChild(openBtn);
 
-  if (state.project?.role === "admin") {
+  if (state.project.role === "admin") {
     const menu = document.createElement("details");
     menu.className = "task-menu";
     const trigger = document.createElement("summary");
@@ -687,14 +698,14 @@ async function loadProject() {
 
 async function loadTasks() {
   const query = new URLSearchParams({ projectId: String(state.projectId) });
-  state.tasks = await request(`/tasks?${query.toString()}`);
+  state.tasks = await request(`/tasks${query.toString()}`);
   renderKanban();
 }
 
 async function loadHistory() {
   elements.historyList.innerHTML = "";
   const query = new URLSearchParams({ projectId: String(state.projectId) });
-  const items = await request(`/tasks/history?${query.toString()}`);
+  const items = await request(`/tasks/history${query.toString()}`);
 
   if (!items.length) {
     elements.historyList.innerHTML = `<li><span>Nenhum item conclu\u00eddo ainda.</span></li>`;
@@ -714,11 +725,11 @@ async function loadHistory() {
 }
 
 function isProjectAdmin() {
-  return state.project?.role === "admin";
+  return state.project.role === "admin";
 }
 
 function canEditComment(comment) {
-  return Number(comment.userId) === Number(state.user?.id);
+  return Number(comment.userId) === Number(state.user.id);
 }
 
 function canDeleteComment(comment) {
@@ -810,7 +821,7 @@ async function editTaskComment(comment) {
 }
 
 async function deleteTaskComment(comment) {
-  if (!window.confirm("Deseja remover este comentário?")) return;
+  if (!window.confirm("Deseja remover este comentário")) return;
   try {
     await request(`/tasks/${state.selectedTask.id}/comments/${comment.id}`, {
       method: "DELETE"
@@ -892,7 +903,7 @@ function createCommentEditForm(comment, { onSave, onCancel }) {
 }
 
 async function deleteProjectComment(comment) {
-  if (!window.confirm("Deseja remover este comentário?")) return;
+  if (!window.confirm("Deseja remover este comentário")) return;
   try {
     await request(`/projects/${state.projectId}/comments/${comment.id}`, {
       method: "DELETE"
@@ -978,7 +989,7 @@ async function openTaskCard(taskId) {
   elements.taskModalTitle.textContent = task.title;
   elements.taskModalDescription.textContent = task.description;
   elements.taskSettingsAssignedTo.value = task.assignedTo ? String(task.assignedTo) : "";
-  if (state.project?.role === "admin") {
+  if (state.project.role === "admin") {
     elements.taskSettingsAssignedTo.disabled = false;
     elements.taskSettingsForm.querySelector("button[type='submit']").disabled = false;
     elements.taskSettingsHint.textContent = "Admin pode alterar o responsavel deste item.";
@@ -1103,6 +1114,9 @@ elements.cancelDeleteMember.addEventListener("click", resetDeleteMemberModal);
 elements.closeBlockingConfirmModal.addEventListener("click", () => resetBlockingConfirmModal(false));
 elements.cancelBlockingConfirm.addEventListener("click", () => resetBlockingConfirmModal(false));
 elements.confirmBlockingConfirm.addEventListener("click", () => resetBlockingConfirmModal(true));
+elements.closeLogoutModal.addEventListener("click", () => closeModal(elements.logoutModal));
+elements.cancelLogout.addEventListener("click", () => closeModal(elements.logoutModal));
+elements.confirmLogout.addEventListener("click", clearSession);
 
 elements.taskModal.addEventListener("click", (event) => {
   if (event.target === elements.taskModal) closeModal(elements.taskModal);
@@ -1127,6 +1141,9 @@ elements.deleteMemberModal.addEventListener("click", (event) => {
 });
 elements.blockingConfirmModal.addEventListener("click", (event) => {
   if (event.target === elements.blockingConfirmModal) resetBlockingConfirmModal(false);
+});
+elements.logoutModal.addEventListener("click", (event) => {
+  if (event.target === elements.logoutModal) closeModal(elements.logoutModal);
 });
 
 elements.confirmDeleteTask.addEventListener("click", async () => {
@@ -1162,7 +1179,7 @@ elements.taskForm.addEventListener("submit", async (event) => {
   const status = elements.taskStatus.value;
 
   if (title.length < 15) return showToast("T\u00edtulo deve ter no m\u00ednimo 15 caracteres.", "error");
-  if (description.length < 30) return showToast("Descri\u00e7\u00e3o deve ter no m\u00ednimo 30 caracteres.", "error");
+  if (description.length < 30) return showToast("Descrição deve ter no mínimo 30 caracteres.", "error");
 
   try {
     if (state.editingTaskId) {
@@ -1189,7 +1206,7 @@ elements.taskForm.addEventListener("submit", async (event) => {
 elements.taskSettingsForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!state.selectedTask) return showToast("Selecione um item.", "error");
-  if (state.project?.role !== "admin") return showToast("Apenas admin pode alterar o responsavel.", "error");
+  if (state.project.role !== "admin") return showToast("Apenas admin pode alterar o responsavel.", "error");
 
   const assignedTo = elements.taskSettingsAssignedTo.value || null;
   try {
@@ -1257,9 +1274,9 @@ elements.projectSettingsForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const name = normalize(elements.settingsProjectName.value);
   const description = normalize(elements.settingsProjectDescription.value);
-  if (!name) return showToast("Nome do projeto é obrigatório.", "error");
-  if (description.length < 30) {
-    return showToast("Descri\u00e7\u00e3o do projeto deve ter no m\u00ednimo 30 caracteres.", "error");
+  if (name.length < 5) return showToast("Nome do projeto deve ter no mínimo 5 caracteres.", "error");
+  if (description.length < 15) {
+    return showToast("Descri\u00e7\u00e3o do projeto deve ter no mínimo 15 caracteres.", "error");
   }
 
   try {
@@ -1312,3 +1329,8 @@ async function bootstrap() {
 }
 
 bootstrap();
+
+
+
+
+

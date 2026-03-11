@@ -11,22 +11,90 @@ dotenv.config();
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
-const JWT_SECRET = process.env.JWT_SECRET || "default_secret";
+const JWT_SECRET = String(process.env.JWT_SECRET || "");
+const IS_PROD = String(process.env.NODE_ENV || "").toLowerCase() === "production";
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/;
+const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{10,}$/;
 const ALLOWED_STATUS = ["a_fazer", "fazendo", "concluido"];
 const ALLOWED_ROLES = ["admin", "member"];
 const ALLOWED_COMMENT_TYPES = ["bug", "melhoria", "anotacao", "bloqueado"];
 const SQL_NOW_BR = "CURRENT_TIMESTAMP";
+const ALLOWED_ORIGINS = String(process.env.CORS_ORIGINS || "http://localhost:3000")
+  .split(",")
+  .map((item) => item.trim())
+  .filter(Boolean);
+const AUTH_WINDOW_MS = 15 * 60 * 1000;
+const AUTH_MAX_ATTEMPTS = 8;
+const authAttempts = new Map();
+const BR_TIMEZONE = "America/Sao_Paulo";
 
-app.use(cors());
-app.use(express.json());
+if (IS_PROD && (JWT_SECRET.length < 32 || JWT_SECRET.toLowerCase().includes("default"))) {
+  throw new Error("JWT_SECRET invalido. Defina uma chave forte com no minimo 32 caracteres.");
+}
+
+app.disable("x-powered-by");
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin || ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+      return callback(new Error("Origem nao permitida pelo CORS."));
+    }
+  })
+);
+app.use(express.json({ limit: "100kb" }));
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "same-origin");
+  res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
+  res.setHeader("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
+  res.setHeader(
+    "Content-Security-Policy",
+    "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none';"
+  );
+  next();
+});
 app.use(express.static(path.resolve(__dirname, "..", "public")));
 
 let db;
 
 function normalizeText(value) {
   return String(value || "").trim();
+}
+
+function hasUnsafeHtml(value) {
+  return /[<>]/.test(String(value || ""));
+}
+
+function ensureSafeTextFields(fields) {
+  return fields.every((value) => !hasUnsafeHtml(value));
+}
+
+function getClientIp(req) {
+  return String(req.ip || req.connection?.remoteAddress || "unknown");
+}
+
+function checkAuthRateLimit(req, res) {
+  const now = Date.now();
+  const key = `${getClientIp(req)}:${req.path}`;
+  const entry = authAttempts.get(key);
+  if (!entry || now > entry.resetAt) {
+    authAttempts.set(key, { count: 1, resetAt: now + AUTH_WINDOW_MS });
+    return true;
+  }
+  if (entry.count >= AUTH_MAX_ATTEMPTS) {
+    const seconds = Math.ceil((entry.resetAt - now) / 1000);
+    res.setHeader("Retry-After", String(seconds));
+    res.status(429).json({ message: "Muitas tentativas. Tente novamente em instantes." });
+    return false;
+  }
+  entry.count += 1;
+  return true;
+}
+
+function clearAuthRateLimit(req) {
+  const key = `${getClientIp(req)}:${req.path}`;
+  authAttempts.delete(key);
 }
 
 function normalizeEmail(value) {
@@ -39,7 +107,7 @@ function hasMinLength(value, min) {
 
 function isFullName(value) {
   const name = normalizeText(value);
-  return name.length >= 15 && /\S+\s+\S+/.test(name);
+  return name.length >= 12 && /\S+\s+\S+/.test(name);
 }
 
 function createToken(user) {
@@ -52,6 +120,39 @@ function createToken(user) {
     JWT_SECRET,
     { expiresIn: "1d" }
   );
+}
+
+function formatDateTimeBrt(value) {
+  if (!value) return value;
+  const sqlitePattern = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
+  let date;
+  if (typeof value === "string" && sqlitePattern.test(value)) {
+    date = new Date(value.replace(" ", "T") + "Z");
+  } else {
+    date = new Date(value);
+  }
+  if (Number.isNaN(date.getTime())) return value;
+  const parts = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: BR_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false
+  }).formatToParts(date);
+  const map = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${map.year}-${map.month}-${map.day} ${map.hour}:${map.minute}:${map.second}`;
+}
+
+function withBrtDates(item, fields) {
+  if (!item) return item;
+  const output = { ...item };
+  fields.forEach((field) => {
+    if (output[field]) output[field] = formatDateTimeBrt(output[field]);
+  });
+  return output;
 }
 
 async function getProjectMembership(projectId, userId) {
@@ -82,6 +183,7 @@ function requireAdmin(req, res, next) {
 
 app.post("/api/auth/register", async (req, res) => {
   try {
+    if (!checkAuthRateLimit(req, res)) return;
     const name = normalizeText(req.body.name);
     const email = normalizeEmail(req.body.email);
     const password = String(req.body.password || "");
@@ -92,14 +194,18 @@ app.post("/api/auth/register", async (req, res) => {
     if (!isFullName(name)) {
       return res
         .status(400)
-        .json({ message: "Nome deve ser completo e conter no minimo 15 caracteres." });
+        .json({ message: "Nome deve ser completo e conter no minimo 12 caracteres." });
+    }
+    if (!ensureSafeTextFields([name])) {
+      return res.status(400).json({ message: "Nome contem caracteres nao permitidos." });
     }
     if (!EMAIL_REGEX.test(email)) {
       return res.status(400).json({ message: "Formato de e-mail invalido (ex: texto@texto.com)." });
     }
     if (!PASSWORD_REGEX.test(password)) {
       return res.status(400).json({
-        message: "Senha invalida: use 1 letra maiuscula, 1 numero e 1 caractere especial."
+        message:
+          "Senha invalida: use no minimo 10 caracteres com 1 letra maiuscula, 1 numero e 1 caractere especial."
       });
     }
 
@@ -117,6 +223,7 @@ app.post("/api/auth/register", async (req, res) => {
 
     const user = await db.get(`SELECT id, name, email FROM users WHERE id = ?`, [result.lastID]);
     const token = createToken(user);
+    clearAuthRateLimit(req);
     return res.status(201).json({ user, token });
   } catch (error) {
     return res.status(500).json({ message: "Erro ao registrar usuario." });
@@ -125,6 +232,7 @@ app.post("/api/auth/register", async (req, res) => {
 
 app.post("/api/auth/login", async (req, res) => {
   try {
+    if (!checkAuthRateLimit(req, res)) return;
     const email = normalizeEmail(req.body.email);
     const password = String(req.body.password || "");
     if (!email || !password) {
@@ -142,6 +250,7 @@ app.post("/api/auth/login", async (req, res) => {
 
     const safeUser = { id: user.id, name: user.name, email: user.email };
     const token = createToken(safeUser);
+    clearAuthRateLimit(req);
     return res.json({ user: safeUser, token });
   } catch (error) {
     return res.status(500).json({ message: "Erro ao fazer login." });
@@ -150,7 +259,24 @@ app.post("/api/auth/login", async (req, res) => {
 
 app.get("/api/users", authMiddleware, async (req, res) => {
   try {
-    const users = await db.all(`SELECT id, name, email FROM users ORDER BY name`);
+    const projectId = Number(req.query.projectId);
+    if (!projectId) return res.status(400).json({ message: "projectId e obrigatorio." });
+
+    const membership = await getProjectMembership(projectId, req.user.id);
+    if (!membership || membership.role !== "admin") {
+      return res.status(403).json({ message: "Apenas admin do projeto pode listar usuarios." });
+    }
+
+    const users = await db.all(
+      `
+      SELECT u.id, u.name, u.email, pm.role
+      FROM project_members pm
+      INNER JOIN users u ON u.id = pm.user_id
+      WHERE pm.project_id = ?
+      ORDER BY u.name
+      `,
+      [projectId]
+    );
     return res.json(users);
   } catch (error) {
     return res.status(500).json({ message: "Erro ao listar usuarios." });
@@ -177,7 +303,7 @@ app.get("/api/projects", authMiddleware, async (req, res) => {
       `,
       [req.user.id]
     );
-    return res.json(projects);
+    return res.json(projects.map((project) => withBrtDates(project, ["createdAt"])));
   } catch (error) {
     return res.status(500).json({ message: "Erro ao listar projetos." });
   }
@@ -189,8 +315,14 @@ app.post("/api/projects", authMiddleware, async (req, res) => {
     const description = normalizeText(req.body.description);
 
     if (!name) return res.status(400).json({ message: "Nome do projeto e obrigatorio." });
-    if (!hasMinLength(description, 30)) {
-      return res.status(400).json({ message: "Descricao do projeto deve ter no minimo 30 caracteres." });
+    if (!hasMinLength(name, 5)) {
+      return res.status(400).json({ message: "Nome do projeto deve ter no minimo 5 caracteres." });
+    }
+    if (!ensureSafeTextFields([name, description])) {
+      return res.status(400).json({ message: "Texto contem caracteres nao permitidos." });
+    }
+    if (!hasMinLength(description, 15)) {
+      return res.status(400).json({ message: "Descricao do projeto deve ter no minimo 15 caracteres." });
     }
 
     const existingProject = await db.get(`SELECT id FROM projects WHERE lower(name) = lower(?)`, [name]);
@@ -210,7 +342,7 @@ app.post("/api/projects", authMiddleware, async (req, res) => {
       `SELECT id, name, description, created_at AS createdAt FROM projects WHERE id = ?`,
       [result.lastID]
     );
-    return res.status(201).json({ ...project, role: "admin" });
+    return res.status(201).json({ ...withBrtDates(project, ["createdAt"]), role: "admin" });
   } catch (error) {
     return res.status(500).json({ message: "Erro ao criar projeto." });
   }
@@ -239,7 +371,7 @@ app.get("/api/projects/:projectId", authMiddleware, requireMembership, async (re
       [req.projectId]
     );
 
-    return res.json({ ...project, role: req.membership.role, members });
+    return res.json({ ...withBrtDates(project, ["createdAt"]), role: req.membership.role, members });
   } catch (error) {
     return res.status(500).json({ message: "Erro ao detalhar projeto." });
   }
@@ -251,8 +383,14 @@ app.patch("/api/projects/:projectId", authMiddleware, requireMembership, require
     const description = normalizeText(req.body.description);
 
     if (!name) return res.status(400).json({ message: "Nome do projeto e obrigatorio." });
-    if (!hasMinLength(description, 30)) {
-      return res.status(400).json({ message: "Descricao do projeto deve ter no minimo 30 caracteres." });
+    if (!hasMinLength(name, 5)) {
+      return res.status(400).json({ message: "Nome do projeto deve ter no minimo 5 caracteres." });
+    }
+    if (!ensureSafeTextFields([name, description])) {
+      return res.status(400).json({ message: "Texto contem caracteres nao permitidos." });
+    }
+    if (!hasMinLength(description, 15)) {
+      return res.status(400).json({ message: "Descricao do projeto deve ter no minimo 15 caracteres." });
     }
 
     const conflict = await db.get(
@@ -326,10 +464,19 @@ app.patch(
       }
 
       const row = await db.get(
-        `SELECT user_id AS userId FROM project_members WHERE project_id = ? AND user_id = ?`,
+        `SELECT user_id AS userId, role FROM project_members WHERE project_id = ? AND user_id = ?`,
         [req.projectId, userId]
       );
       if (!row) return res.status(404).json({ message: "Membro nao encontrado no projeto." });
+      if (userId === req.user.id && role !== "admin") {
+        const adminCountRow = await db.get(
+          `SELECT COUNT(1) AS total FROM project_members WHERE project_id = ? AND role = 'admin'`,
+          [req.projectId]
+        );
+        if (Number(adminCountRow?.total || 0) <= 1) {
+          return res.status(400).json({ message: "Projeto deve ter ao menos um admin." });
+        }
+      }
 
       await db.run(`UPDATE project_members SET role = ? WHERE project_id = ? AND user_id = ?`, [
         role,
@@ -396,7 +543,7 @@ app.get("/api/projects/:projectId/comments", authMiddleware, requireMembership, 
       `,
       [req.projectId]
     );
-    return res.json(comments);
+    return res.json(comments.map((comment) => withBrtDates(comment, ["createdAt"])));
   } catch (error) {
     return res.status(500).json({ message: "Erro ao listar comentarios do projeto." });
   }
@@ -406,6 +553,9 @@ app.post("/api/projects/:projectId/comments", authMiddleware, requireMembership,
   try {
     const content = normalizeText(req.body.content);
     const type = normalizeText(req.body.type || "anotacao");
+    if (!ensureSafeTextFields([content])) {
+      return res.status(400).json({ message: "Comentario contem caracteres nao permitidos." });
+    }
     if (!hasMinLength(content, 20)) {
       return res.status(400).json({ message: "Comentario deve ter no minimo 20 caracteres." });
     }
@@ -432,7 +582,7 @@ app.post("/api/projects/:projectId/comments", authMiddleware, requireMembership,
       `,
       [result.lastID]
     );
-    return res.status(201).json(comment);
+    return res.status(201).json(withBrtDates(comment, ["createdAt"]));
   } catch (error) {
     return res.status(500).json({ message: "Erro ao criar comentario do projeto." });
   }
@@ -446,6 +596,9 @@ app.patch("/api/projects/:projectId/comments/:commentId", authMiddleware, requir
       ? normalizeText(req.body.type)
       : null;
     if (!commentId) return res.status(400).json({ message: "commentId invalido." });
+    if (!ensureSafeTextFields([content])) {
+      return res.status(400).json({ message: "Comentario contem caracteres nao permitidos." });
+    }
     if (!hasMinLength(content, 20)) {
       return res.status(400).json({ message: "Comentario deve ter no minimo 20 caracteres." });
     }
@@ -483,7 +636,7 @@ app.patch("/api/projects/:projectId/comments/:commentId", authMiddleware, requir
       `,
       [commentId]
     );
-    return res.json(updated);
+    return res.json(withBrtDates(updated, ["createdAt"]));
   } catch (error) {
     return res.status(500).json({ message: "Erro ao editar comentario do projeto." });
   }
@@ -562,7 +715,7 @@ app.get("/api/tasks", authMiddleware, requireMembership, async (req, res) => {
       params
     );
 
-    return res.json(tasks);
+    return res.json(tasks.map((task) => withBrtDates(task, ["createdAt", "updatedAt", "finalizedAt"])));
   } catch (error) {
     return res.status(500).json({ message: "Erro ao listar tarefas." });
   }
@@ -595,7 +748,7 @@ app.get("/api/tasks/history", authMiddleware, requireMembership, async (req, res
       [req.projectId]
     );
 
-    return res.json(tasks);
+    return res.json(tasks.map((task) => withBrtDates(task, ["createdAt", "updatedAt", "finalizedAt"])));
   } catch (error) {
     return res.status(500).json({ message: "Erro ao listar histórico de tarefas concluídas." });
   }
@@ -613,6 +766,9 @@ app.post("/api/tasks", authMiddleware, requireMembership, async (req, res) => {
         : Number(assignedToRaw);
 
     if (!title) return res.status(400).json({ message: "title e obrigatorio." });
+    if (!ensureSafeTextFields([title, description])) {
+      return res.status(400).json({ message: "Texto contem caracteres nao permitidos." });
+    }
     if (!hasMinLength(title, 15)) {
       return res.status(400).json({ message: "Titulo da tarefa deve ter no minimo 15 caracteres." });
     }
@@ -660,7 +816,7 @@ app.post("/api/tasks", authMiddleware, requireMembership, async (req, res) => {
       [result.lastID]
     );
 
-    return res.status(201).json(task);
+    return res.status(201).json(withBrtDates(task, ["createdAt", "updatedAt", "finalizedAt"]));
   } catch (error) {
     return res.status(500).json({ message: "Erro ao criar tarefa." });
   }
@@ -703,6 +859,9 @@ app.patch("/api/tasks/:taskId", authMiddleware, async (req, res) => {
 
     if (titleProvided && !hasMinLength(title, 15)) {
       return res.status(400).json({ message: "Titulo da tarefa deve ter no minimo 15 caracteres." });
+    }
+    if (!ensureSafeTextFields([titleProvided ? title : "", descriptionProvided ? description : ""])) {
+      return res.status(400).json({ message: "Texto contem caracteres nao permitidos." });
     }
     if (descriptionProvided && !hasMinLength(description, 30)) {
       return res.status(400).json({ message: "Descricao da tarefa deve ter no minimo 30 caracteres." });
@@ -782,7 +941,7 @@ app.patch("/api/tasks/:taskId", authMiddleware, async (req, res) => {
       [taskId]
     );
 
-    return res.json(task);
+    return res.json(withBrtDates(task, ["createdAt", "updatedAt", "finalizedAt"]));
   } catch (error) {
     return res.status(500).json({ message: "Erro ao atualizar tarefa." });
   }
@@ -831,7 +990,7 @@ app.get("/api/tasks/:taskId/comments", authMiddleware, async (req, res) => {
       [taskId]
     );
 
-    return res.json(comments);
+    return res.json(comments.map((comment) => withBrtDates(comment, ["createdAt"])));
   } catch (error) {
     return res.status(500).json({ message: "Erro ao listar comentarios." });
   }
@@ -843,6 +1002,9 @@ app.post("/api/tasks/:taskId/comments", authMiddleware, async (req, res) => {
     const content = normalizeText(req.body.content);
     const type = normalizeText(req.body.type || "anotacao");
     if (!taskId || !content) return res.status(400).json({ message: "taskId e content sao obrigatorios." });
+    if (!ensureSafeTextFields([content])) {
+      return res.status(400).json({ message: "Comentario contem caracteres nao permitidos." });
+    }
     if (!hasMinLength(content, 20)) {
       return res.status(400).json({ message: "Comentario deve ter no minimo 20 caracteres." });
     }
@@ -871,7 +1033,7 @@ app.post("/api/tasks/:taskId/comments", authMiddleware, async (req, res) => {
       [result.lastID]
     );
 
-    return res.status(201).json(comment);
+    return res.status(201).json(withBrtDates(comment, ["createdAt"]));
   } catch (error) {
     return res.status(500).json({ message: "Erro ao criar comentario." });
   }
@@ -887,6 +1049,9 @@ app.patch("/api/tasks/:taskId/comments/:commentId", authMiddleware, async (req, 
       : null;
     if (!taskId || !commentId) {
       return res.status(400).json({ message: "taskId e commentId sao obrigatorios." });
+    }
+    if (!ensureSafeTextFields([content])) {
+      return res.status(400).json({ message: "Comentario contem caracteres nao permitidos." });
     }
     if (!hasMinLength(content, 20)) {
       return res.status(400).json({ message: "Comentario deve ter no minimo 20 caracteres." });
@@ -925,7 +1090,7 @@ app.patch("/api/tasks/:taskId/comments/:commentId", authMiddleware, async (req, 
       `,
       [commentId]
     );
-    return res.json(updated);
+    return res.json(withBrtDates(updated, ["createdAt"]));
   } catch (error) {
     return res.status(500).json({ message: "Erro ao editar comentario." });
   }

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
@@ -9,11 +9,25 @@
       content="Crie sua conta no Task Manager para organizar projetos, itens e comentários em equipe."
     />
     <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#1f2937" />
+    <link rel="canonical" href="http://localhost:3000/register" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Task Manager" />
+    <meta property="og:title" content="Task Manager | Cadastro" />
+    <meta property="og:description" content="Crie sua conta e comece a gerenciar tarefas e projetos." />
+    <meta property="og:url" content="http://localhost:3000/register" />
+    <meta property="og:image" content="http://localhost:3000/favicon.svg" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Task Manager | Cadastro" />
+    <meta name="twitter:description" content="Crie sua conta e comece a gerenciar tarefas e projetos." />
+    <meta name="twitter:image" content="http://localhost:3000/favicon.svg" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/site.webmanifest" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
+    <a class="skip-link" href="#main-content">Pular para o conteúdo</a>
+
     <header>
       <div class="brand">
         <h1>Task Manager</h1>
@@ -21,28 +35,43 @@
       </div>
     </header>
 
-    <main>
-      <section class="card auth-card auth-single">
-        <h2>Cadastro</h2>
-        <form id="register-form">
+    <main id="main-content">
+      <section class="card auth-card auth-single" aria-labelledby="register-title">
+        <h2 id="register-title">Cadastro</h2>
+        <form id="register-form" novalidate>
+          <label class="sr-only" for="register-name">Nome completo</label>
           <input
             type="text"
             id="register-name"
+            name="name"
+            autocomplete="name"
             placeholder="Nome completo"
-            minlength="15"
+            minlength="12"
             required
           />
-          <p class="hint">Mínimo de 15 caracteres e nome completo.</p>
-          <input type="email" id="register-email" placeholder="email@empresa.com" required />
-          <p class="hint">Formato válido: texto@texto.com.</p>
+
+          <label class="sr-only" for="register-email">E-mail</label>
+          <input
+            type="email"
+            id="register-email"
+            name="email"
+            autocomplete="email"
+            placeholder="email@empresa.com"
+            required
+            data-invalid-message="* Informe um e-mail válido no formato texto@texto.com."
+          />
+
+          <label class="sr-only" for="register-password">Senha</label>
           <input
             type="password"
             id="register-password"
+            name="password"
+            autocomplete="new-password"
             placeholder="Senha forte"
-            pattern="^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$"
+            pattern="^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{10,}$"
             required
+            data-invalid-message="* A senha deve ter no mínimo 10 caracteres, com 1 letra maiúscula, 1 número e 1 caractere especial."
           />
-          <p class="hint">Use 1 letra maiúscula, 1 número e 1 caractere especial.</p>
           <button type="submit">Cadastrar</button>
         </form>
         <p class="hint auth-switch">
@@ -51,7 +80,7 @@
       </section>
     </main>
 
-    <div id="toast"></div>
+    <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
     <script src="./form-feedback.js"></script>
     <script src="./register.js"></script>
   </body>

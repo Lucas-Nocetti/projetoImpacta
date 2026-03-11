@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
@@ -6,11 +6,25 @@
     <title>Task Manager | Criar Projeto</title>
     <meta name="description" content="Crie um novo projeto no Task Manager." />
     <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#1f2937" />
+    <link rel="canonical" href="http://localhost:3000/project-create" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Task Manager" />
+    <meta property="og:title" content="Task Manager | Criar Projeto" />
+    <meta property="og:description" content="Crie um projeto e organize tarefas com sua equipe." />
+    <meta property="og:url" content="http://localhost:3000/project-create" />
+    <meta property="og:image" content="http://localhost:3000/favicon.svg" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Task Manager | Criar Projeto" />
+    <meta name="twitter:description" content="Crie um projeto e organize tarefas com sua equipe." />
+    <meta name="twitter:image" content="http://localhost:3000/favicon.svg" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/site.webmanifest" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
+    <a class="skip-link" href="#main-content">Pular para o conteúdo</a>
+
     <header>
       <div class="brand">
         <h1>Task Manager</h1>
@@ -19,33 +33,55 @@
       <div id="session-area"></div>
     </header>
 
-    <main>
-      <section class="card auth-card auth-single">
-        <h2>Criar projeto</h2>
-        <form id="project-form">
+    <main id="main-content">
+      <section class="card auth-card auth-single" aria-labelledby="project-create-title">
+        <h2 id="project-create-title">Criar projeto</h2>
+        <form id="project-form" novalidate>
+          <label class="sr-only" for="project-name">Nome do projeto</label>
           <input
             type="text"
             id="project-name"
+            name="project_name"
             placeholder="Nome do projeto"
-            minlength="3"
+            minlength="5"
             required
           />
+
+          <label class="sr-only" for="project-description">Descrição detalhada do projeto</label>
           <textarea
             id="project-description"
+            name="project_description"
             placeholder="Descrição detalhada do projeto"
-            minlength="30"
+            minlength="15"
             required
           ></textarea>
-          <p class="hint">Descrição com no mínimo 30 caracteres.</p>
-          <button type="submit">Salvar projeto</button>
+          <button type="submit">Criar Projeto</button>
         </form>
         <p class="hint auth-switch">
-          <a href="/app">Voltar para projetos</a>
+          <a class="back-link" href="/app">Voltar para projetos</a>
         </p>
       </section>
     </main>
 
-    <div id="toast"></div>
+    <section id="logout-modal" class="modal-overlay hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="logout-modal-title">
+      <div class="modal-card">
+        <div class="modal-head">
+          <h3 id="logout-modal-title">Confirmar saída</h3>
+          <button id="close-logout-modal" type="button" class="btn-light btn-icon" aria-label="Fechar" title="Fechar">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 6L18 18M18 6L6 18"></path>
+            </svg>
+          </button>
+        </div>
+        <p>Deseja encerrar sua sessão agora?</p>
+        <div class="inline-actions">
+          <button id="cancel-logout" type="button" class="btn-light" title="Cancelar saída">Cancelar</button>
+          <button id="confirm-logout" type="button" class="danger" title="Confirmar saída">Sair</button>
+        </div>
+      </div>
+    </section>
+
+    <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
     <script src="./form-feedback.js"></script>
     <script src="./project-create.js"></script>
   </body>

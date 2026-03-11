@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
@@ -9,11 +9,25 @@
       content="Selecione um projeto no Task Manager para acompanhar itens, comentários e atividades."
     />
     <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#1f2937" />
+    <link rel="canonical" href="http://localhost:3000/app" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Task Manager" />
+    <meta property="og:title" content="Task Manager | Projetos" />
+    <meta property="og:description" content="Acompanhe projetos, membros e atividades do time." />
+    <meta property="og:url" content="http://localhost:3000/app" />
+    <meta property="og:image" content="http://localhost:3000/favicon.svg" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Task Manager | Projetos" />
+    <meta name="twitter:description" content="Acompanhe projetos, membros e atividades do time." />
+    <meta name="twitter:image" content="http://localhost:3000/favicon.svg" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/site.webmanifest" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
+    <a class="skip-link" href="#main-content">Pular para o conteúdo</a>
+
     <header>
       <div class="brand">
         <h1>Task Manager</h1>
@@ -22,10 +36,10 @@
       <div id="session-area"></div>
     </header>
 
-    <main>
-      <section class="card">
+    <main id="main-content">
+      <section class="card" aria-labelledby="projects-list-title">
         <div class="section-header">
-          <h2>Projetos vinculados</h2>
+          <h2 id="projects-list-title">Projetos vinculados</h2>
           <a id="go-create-project" class="button-link" href="/project-create">Criar projeto</a>
         </div>
         <p class="hint">Clique em um card para abrir o projeto.</p>
@@ -33,7 +47,7 @@
       </section>
     </main>
 
-    <section id="project-settings-modal" class="modal-overlay hidden" aria-hidden="true">
+    <section id="project-settings-modal" class="modal-overlay hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="project-settings-title">
       <div class="modal-card modal-lg">
         <div class="modal-head">
           <h3 id="project-settings-title">Configurações do projeto</h3>
@@ -44,19 +58,25 @@
           </button>
         </div>
 
-        <form id="project-settings-form-app">
+        <form id="project-settings-form-app" novalidate>
+          <label class="sr-only" for="project-settings-name-app">Nome do projeto</label>
           <input type="text" id="project-settings-name-app" placeholder="Nome do projeto" required />
+
+          <label class="sr-only" for="project-settings-description-app">Descrição do projeto</label>
           <textarea
             id="project-settings-description-app"
             placeholder="Descrição do projeto"
-            minlength="30"
+            minlength="15"
             required
           ></textarea>
           <button type="submit" title="Salvar configurações do projeto">Salvar configurações</button>
         </form>
 
-        <form id="project-member-form-app">
+        <form id="project-member-form-app" novalidate>
+          <label class="sr-only" for="project-member-email-app">E-mail do membro</label>
           <input type="email" id="project-member-email-app" placeholder="E-mail do membro" required />
+
+          <label class="sr-only" for="project-member-role-app">Papel do membro</label>
           <select id="project-member-role-app" aria-label="Papel do membro">
             <option value="member">Usuário comum</option>
             <option value="admin">Admin do projeto</option>
@@ -69,10 +89,10 @@
       </div>
     </section>
 
-    <section id="delete-project-modal" class="modal-overlay hidden" aria-hidden="true">
+    <section id="delete-project-modal" class="modal-overlay hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="delete-project-title">
       <div class="modal-card">
         <div class="modal-head">
-          <h3>Confirmar exclusão</h3>
+          <h3 id="delete-project-title">Confirmar exclusão</h3>
           <button id="close-delete-project-modal" type="button" class="btn-light btn-icon" aria-label="Fechar" title="Fechar">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M6 6L18 18M18 6L6 18"></path>
@@ -89,10 +109,10 @@
       </div>
     </section>
 
-    <section id="delete-member-modal" class="modal-overlay hidden" aria-hidden="true">
+    <section id="delete-member-modal" class="modal-overlay hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="delete-member-title">
       <div class="modal-card">
         <div class="modal-head">
-          <h3>Confirmar remoção de membro</h3>
+          <h3 id="delete-member-title">Confirmar remoção de membro</h3>
           <button id="close-delete-member-modal" type="button" class="btn-light btn-icon" aria-label="Fechar" title="Fechar">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M6 6L18 18M18 6L6 18"></path>
@@ -109,7 +129,25 @@
       </div>
     </section>
 
-    <div id="toast"></div>
+    <section id="logout-modal" class="modal-overlay hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="logout-modal-title">
+      <div class="modal-card">
+        <div class="modal-head">
+          <h3 id="logout-modal-title">Confirmar saída</h3>
+          <button id="close-logout-modal" type="button" class="btn-light btn-icon" aria-label="Fechar" title="Fechar">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 6L18 18M18 6L6 18"></path>
+            </svg>
+          </button>
+        </div>
+        <p>Deseja encerrar sua sessão agora?</p>
+        <div class="inline-actions">
+          <button id="cancel-logout" type="button" class="btn-light" title="Cancelar saída">Cancelar</button>
+          <button id="confirm-logout" type="button" class="danger" title="Confirmar saída">Sair</button>
+        </div>
+      </div>
+    </section>
+
+    <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
     <script src="./form-feedback.js"></script>
     <script src="./app.js"></script>
   </body>

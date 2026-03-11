@@ -1,16 +1,30 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Task Manager | Login</title>
-    <meta name="description" content="Acesse o Task Manager para acompanhar seus projetos e tarefas." />
+    <meta name="description" content="Acesse o Task Manager para acompanhar seus projetos e tarefas em equipe." />
     <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#1f2937" />
+    <link rel="canonical" href="http://localhost:3000/login" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Task Manager" />
+    <meta property="og:title" content="Task Manager | Login" />
+    <meta property="og:description" content="Entre na sua conta para gerenciar projetos e tarefas." />
+    <meta property="og:url" content="http://localhost:3000/login" />
+    <meta property="og:image" content="http://localhost:3000/favicon.svg" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Task Manager | Login" />
+    <meta name="twitter:description" content="Entre na sua conta para gerenciar projetos e tarefas." />
+    <meta name="twitter:image" content="http://localhost:3000/favicon.svg" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/site.webmanifest" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
+    <a class="skip-link" href="#main-content">Pular para o conteúdo</a>
+
     <header>
       <div class="brand">
         <h1>Task Manager</h1>
@@ -18,12 +32,16 @@
       </div>
     </header>
 
-    <main>
-      <section class="card auth-card auth-single">
-        <h2>Login</h2>
-        <form id="login-form">
-          <input type="email" id="login-email" placeholder="email@empresa.com" required />
-          <input type="password" id="login-password" placeholder="Senha" required />
+    <main id="main-content">
+      <section class="card auth-card auth-single" aria-labelledby="login-title">
+        <h2 id="login-title">Login</h2>
+        <form id="login-form" novalidate>
+          <label class="sr-only" for="login-email">E-mail</label>
+          <input type="email" id="login-email" name="email" autocomplete="email" placeholder="email@empresa.com" required />
+
+          <label class="sr-only" for="login-password">Senha</label>
+          <input type="password" id="login-password" name="password" autocomplete="current-password" placeholder="Senha" required />
+
           <button type="submit">Entrar</button>
         </form>
         <p class="hint auth-switch">
@@ -32,7 +50,7 @@
       </section>
     </main>
 
-    <div id="toast"></div>
+    <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
     <script src="./form-feedback.js"></script>
     <script src="./login.js"></script>
   </body>
