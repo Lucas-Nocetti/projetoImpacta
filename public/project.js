@@ -107,9 +107,9 @@ function formatDateTime(value) {
   if (!value) return "-";
   const sqliteDateTimePattern = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
   if (sqliteDateTimePattern.test(value)) {
-    const utcDate = new Date(value.replace(" ", "T") + "Z");
-    if (!Number.isNaN(utcDate.getTime())) {
-      return utcDate.toLocaleString("pt-BR", {
+    const brtDate = new Date(value.replace(" ", "T") + "-03:00");
+    if (!Number.isNaN(brtDate.getTime())) {
+      return brtDate.toLocaleString("pt-BR", {
         dateStyle: "short",
         timeStyle: "short",
         timeZone: "America/Sao_Paulo"

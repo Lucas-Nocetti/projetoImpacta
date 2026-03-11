@@ -26,6 +26,7 @@ const ALLOWED_ORIGINS = String(process.env.CORS_ORIGINS || "http://localhost:300
 const AUTH_WINDOW_MS = 15 * 60 * 1000;
 const AUTH_MAX_ATTEMPTS = 8;
 const authAttempts = new Map();
+const BR_TIMEZONE = "America/Sao_Paulo";
 
 if (IS_PROD && (JWT_SECRET.length < 32 || JWT_SECRET.toLowerCase().includes("default"))) {
   throw new Error("JWT_SECRET invalido. Defina uma chave forte com no minimo 32 caracteres.");
@@ -119,6 +120,39 @@ function createToken(user) {
     JWT_SECRET,
     { expiresIn: "1d" }
   );
+}
+
+function formatDateTimeBrt(value) {
+  if (!value) return value;
+  const sqlitePattern = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
+  let date;
+  if (typeof value === "string" && sqlitePattern.test(value)) {
+    date = new Date(value.replace(" ", "T") + "Z");
+  } else {
+    date = new Date(value);
+  }
+  if (Number.isNaN(date.getTime())) return value;
+  const parts = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: BR_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false
+  }).formatToParts(date);
+  const map = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${map.year}-${map.month}-${map.day} ${map.hour}:${map.minute}:${map.second}`;
+}
+
+function withBrtDates(item, fields) {
+  if (!item) return item;
+  const output = { ...item };
+  fields.forEach((field) => {
+    if (output[field]) output[field] = formatDateTimeBrt(output[field]);
+  });
+  return output;
 }
 
 async function getProjectMembership(projectId, userId) {
@@ -269,7 +303,7 @@ app.get("/api/projects", authMiddleware, async (req, res) => {
       `,
       [req.user.id]
     );
-    return res.json(projects);
+    return res.json(projects.map((project) => withBrtDates(project, ["createdAt"])));
   } catch (error) {
     return res.status(500).json({ message: "Erro ao listar projetos." });
   }
@@ -308,7 +342,7 @@ app.post("/api/projects", authMiddleware, async (req, res) => {
       `SELECT id, name, description, created_at AS createdAt FROM projects WHERE id = ?`,
       [result.lastID]
     );
-    return res.status(201).json({ ...project, role: "admin" });
+    return res.status(201).json({ ...withBrtDates(project, ["createdAt"]), role: "admin" });
   } catch (error) {
     return res.status(500).json({ message: "Erro ao criar projeto." });
   }
@@ -337,7 +371,7 @@ app.get("/api/projects/:projectId", authMiddleware, requireMembership, async (re
       [req.projectId]
     );
 
-    return res.json({ ...project, role: req.membership.role, members });
+    return res.json({ ...withBrtDates(project, ["createdAt"]), role: req.membership.role, members });
   } catch (error) {
     return res.status(500).json({ message: "Erro ao detalhar projeto." });
   }
@@ -509,7 +543,7 @@ app.get("/api/projects/:projectId/comments", authMiddleware, requireMembership, 
       `,
       [req.projectId]
     );
-    return res.json(comments);
+    return res.json(comments.map((comment) => withBrtDates(comment, ["createdAt"])));
   } catch (error) {
     return res.status(500).json({ message: "Erro ao listar comentarios do projeto." });
   }
@@ -548,7 +582,7 @@ app.post("/api/projects/:projectId/comments", authMiddleware, requireMembership,
       `,
       [result.lastID]
     );
-    return res.status(201).json(comment);
+    return res.status(201).json(withBrtDates(comment, ["createdAt"]));
   } catch (error) {
     return res.status(500).json({ message: "Erro ao criar comentario do projeto." });
   }
@@ -602,7 +636,7 @@ app.patch("/api/projects/:projectId/comments/:commentId", authMiddleware, requir
       `,
       [commentId]
     );
-    return res.json(updated);
+    return res.json(withBrtDates(updated, ["createdAt"]));
   } catch (error) {
     return res.status(500).json({ message: "Erro ao editar comentario do projeto." });
   }
@@ -681,7 +715,7 @@ app.get("/api/tasks", authMiddleware, requireMembership, async (req, res) => {
       params
     );
 
-    return res.json(tasks);
+    return res.json(tasks.map((task) => withBrtDates(task, ["createdAt", "updatedAt", "finalizedAt"])));
   } catch (error) {
     return res.status(500).json({ message: "Erro ao listar tarefas." });
   }
@@ -714,7 +748,7 @@ app.get("/api/tasks/history", authMiddleware, requireMembership, async (req, res
       [req.projectId]
     );
 
-    return res.json(tasks);
+    return res.json(tasks.map((task) => withBrtDates(task, ["createdAt", "updatedAt", "finalizedAt"])));
   } catch (error) {
     return res.status(500).json({ message: "Erro ao listar histórico de tarefas concluídas." });
   }
@@ -782,7 +816,7 @@ app.post("/api/tasks", authMiddleware, requireMembership, async (req, res) => {
       [result.lastID]
     );
 
-    return res.status(201).json(task);
+    return res.status(201).json(withBrtDates(task, ["createdAt", "updatedAt", "finalizedAt"]));
   } catch (error) {
     return res.status(500).json({ message: "Erro ao criar tarefa." });
   }
@@ -907,7 +941,7 @@ app.patch("/api/tasks/:taskId", authMiddleware, async (req, res) => {
       [taskId]
     );
 
-    return res.json(task);
+    return res.json(withBrtDates(task, ["createdAt", "updatedAt", "finalizedAt"]));
   } catch (error) {
     return res.status(500).json({ message: "Erro ao atualizar tarefa." });
   }
@@ -956,7 +990,7 @@ app.get("/api/tasks/:taskId/comments", authMiddleware, async (req, res) => {
       [taskId]
     );
 
-    return res.json(comments);
+    return res.json(comments.map((comment) => withBrtDates(comment, ["createdAt"])));
   } catch (error) {
     return res.status(500).json({ message: "Erro ao listar comentarios." });
   }
@@ -999,7 +1033,7 @@ app.post("/api/tasks/:taskId/comments", authMiddleware, async (req, res) => {
       [result.lastID]
     );
 
-    return res.status(201).json(comment);
+    return res.status(201).json(withBrtDates(comment, ["createdAt"]));
   } catch (error) {
     return res.status(500).json({ message: "Erro ao criar comentario." });
   }
@@ -1056,7 +1090,7 @@ app.patch("/api/tasks/:taskId/comments/:commentId", authMiddleware, async (req, 
       `,
       [commentId]
     );
-    return res.json(updated);
+    return res.json(withBrtDates(updated, ["createdAt"]));
   } catch (error) {
     return res.status(500).json({ message: "Erro ao editar comentario." });
   }
