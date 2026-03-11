@@ -1,6 +1,6 @@
 ﻿const apiBase = "/api";
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PASSWORD_REGEX = /^(=.*[A-Z])(=.*\d)(=.*[^A-Za-z0-9]).{10,}$/;
+const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{10,}$/;
 
 const token = localStorage.getItem("token");
 if (token) window.location.href = "/app";
