@@ -1,4 +1,4 @@
-const apiBase = "/api";
+﻿const apiBase = "/api";
 
 const state = {
   token: localStorage.getItem("token") || "",
@@ -6,7 +6,8 @@ const state = {
   projects: [],
   projectPendingDelete: null,
   selectedProject: null,
-  memberPendingDelete: null
+  memberPendingDelete: null,
+  lastFocusedElement: null
 };
 
 if (!state.token) window.location.href = "/login";
@@ -35,7 +36,11 @@ const elements = {
   closeDeleteMemberModal: document.getElementById("close-delete-member-modal"),
   cancelDeleteMember: document.getElementById("cancel-delete-member"),
   confirmDeleteMember: document.getElementById("confirm-delete-member"),
-  deleteMemberMessage: document.getElementById("delete-member-message")
+  deleteMemberMessage: document.getElementById("delete-member-message"),
+  logoutModal: document.getElementById("logout-modal"),
+  closeLogoutModal: document.getElementById("close-logout-modal"),
+  cancelLogout: document.getElementById("cancel-logout"),
+  confirmLogout: document.getElementById("confirm-logout")
 };
 
 let toastTimer;
@@ -55,9 +60,12 @@ function clearSession() {
 }
 
 function openModal(modal) {
+  state.lastFocusedElement = document.activeElement;
   modal.classList.remove("hidden");
   modal.setAttribute("aria-hidden", "false");
   document.body.classList.add("modal-open");
+  const firstFocusable = modal.querySelector("button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])");
+  if (firstFocusable) firstFocusable.focus();
 }
 
 function closeModal(modal) {
@@ -65,6 +73,9 @@ function closeModal(modal) {
   modal.setAttribute("aria-hidden", "true");
   if (document.querySelectorAll(".modal-overlay:not(.hidden)").length === 0) {
     document.body.classList.remove("modal-open");
+    if (state.lastFocusedElement && typeof state.lastFocusedElement.focus === "function") {
+      state.lastFocusedElement.focus();
+    }
   }
 }
 
@@ -85,9 +96,9 @@ function renderSession() {
       <span class="session-name">${state.user?.name || ""}</span>
       <span class="session-email">${state.user?.email || ""}</span>
     </div>
-    <button id="logout-btn" class="danger">Sair</button>
+    <button id="logout-btn" class="danger" aria-label="Encerrar sessão" title="Encerrar sessão">Sair</button>
   `;
-  document.getElementById("logout-btn").addEventListener("click", clearSession);
+  document.getElementById("logout-btn").addEventListener("click", () => openModal(elements.logoutModal));
 }
 
 function roleLabel(role) {
@@ -131,7 +142,7 @@ function renderProjectMembersInModal(project) {
           memberId: member.id,
           memberName: member.name
         };
-        elements.deleteMemberMessage.textContent = `Tem certeza que deseja remover "${member.name}" deste projeto?`;
+        elements.deleteMemberMessage.textContent = `Tem certeza que deseja remover "${member.name}" deste projeto`;
         openModal(elements.deleteMemberModal);
       });
       li.appendChild(removeBtn);
@@ -261,9 +272,9 @@ elements.projectSettingsFormApp.addEventListener("submit", async (event) => {
   if (!state.selectedProject) return;
   const name = String(elements.projectSettingsNameApp.value || "").trim();
   const description = String(elements.projectSettingsDescriptionApp.value || "").trim();
-  if (!name) return showToast("Nome do projeto é obrigatório.", "error");
-  if (description.length < 30) {
-    return showToast("Descrição do projeto deve ter no mínimo 30 caracteres.", "error");
+  if (name.length < 5) return showToast("Nome do projeto deve ter no mínimo 5 caracteres.", "error");
+  if (description.length < 15) {
+    return showToast("Descrição do projeto deve ter no mínimo 15 caracteres.", "error");
   }
   try {
     await request(`/projects/${state.selectedProject.id}`, {
@@ -313,6 +324,12 @@ elements.cancelDeleteMember.addEventListener("click", resetDeleteMemberState);
 elements.deleteMemberModal.addEventListener("click", (event) => {
   if (event.target === elements.deleteMemberModal) resetDeleteMemberState();
 });
+elements.closeLogoutModal.addEventListener("click", () => closeModal(elements.logoutModal));
+elements.cancelLogout.addEventListener("click", () => closeModal(elements.logoutModal));
+elements.confirmLogout.addEventListener("click", clearSession);
+elements.logoutModal.addEventListener("click", (event) => {
+  if (event.target === elements.logoutModal) closeModal(elements.logoutModal);
+});
 
 elements.confirmDeleteMember.addEventListener("click", async () => {
   if (!state.memberPendingDelete) return;
@@ -355,3 +372,7 @@ async function bootstrap() {
 }
 
 bootstrap();
+
+
+
+

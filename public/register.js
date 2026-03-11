@@ -1,6 +1,6 @@
-const apiBase = "/api";
+﻿const apiBase = "/api";
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/;
+const PASSWORD_REGEX = /^(=.*[A-Z])(=.*\d)(=.*[^A-Za-z0-9]).{10,}$/;
 
 const token = localStorage.getItem("token");
 if (token) window.location.href = "/app";
@@ -13,7 +13,7 @@ function normalize(value) {
 }
 
 function isFullName(name) {
-  return name.length >= 15 && /\S+\s+\S+/.test(name);
+  return name.length >= 12 && /\S+\s+\S+/.test(name);
 }
 
 let toastTimer;
@@ -48,7 +48,7 @@ registerForm.addEventListener("submit", async (event) => {
   const password = String(document.getElementById("register-password").value || "");
 
   if (!isFullName(name)) {
-    showToast("Informe nome completo com no mínimo 15 caracteres.", "error");
+    showToast("Informe nome completo com no mínimo 12 caracteres.", "error");
     return;
   }
   if (!EMAIL_REGEX.test(email)) {
@@ -56,7 +56,7 @@ registerForm.addEventListener("submit", async (event) => {
     return;
   }
   if (!PASSWORD_REGEX.test(password)) {
-    showToast("Senha inválida: use 1 maiúscula, 1 número e 1 caractere especial.", "error");
+    showToast("A senha deve ter no mínimo 10 caracteres, com 1 letra maiúscula, 1 número e 1 caractere especial.", "error");
     return;
   }
 
@@ -72,3 +72,8 @@ registerForm.addEventListener("submit", async (event) => {
     showToast(error.message, "error");
   }
 });
+
+
+
+
+
