@@ -18,7 +18,7 @@ const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{10,}$/;
 const ALLOWED_STATUS = ["a_fazer", "fazendo", "concluido"];
 const ALLOWED_ROLES = ["admin", "member"];
 const ALLOWED_COMMENT_TYPES = ["bug", "melhoria", "anotacao", "bloqueado"];
-const SQL_NOW_BR = "CURRENT_TIMESTAMP";
+const SQL_NOW_BR = "datetime('now','-3 hours')";
 const ALLOWED_ORIGINS = String(process.env.CORS_ORIGINS || "http://localhost:3000")
   .split(",")
   .map((item) => item.trim())
