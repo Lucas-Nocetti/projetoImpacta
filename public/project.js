@@ -698,14 +698,14 @@ async function loadProject() {
 
 async function loadTasks() {
   const query = new URLSearchParams({ projectId: String(state.projectId) });
-  state.tasks = await request(`/tasks${query.toString()}`);
+  state.tasks = await request(`/tasks?${query.toString()}`);
   renderKanban();
 }
 
 async function loadHistory() {
   elements.historyList.innerHTML = "";
   const query = new URLSearchParams({ projectId: String(state.projectId) });
-  const items = await request(`/tasks/history${query.toString()}`);
+  const items = await request(`/tasks/history?${query.toString()}`);
 
   if (!items.length) {
     elements.historyList.innerHTML = `<li><span>Nenhum item conclu\u00eddo ainda.</span></li>`;

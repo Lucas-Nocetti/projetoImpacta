@@ -40,7 +40,7 @@
         <div class="section-header">
           <h2 id="project-title">Projeto</h2>
           <div class="inline-actions">
-            <button id="back-to-projects" type="button" class="icon-only-btn" aria-label="Voltar para a pÃ¡gina anterior" title="Voltar para a pÃ¡gina anterior">
+            <button id="back-to-projects" type="button" class="icon-only-btn" aria-label="Voltar para a página anterior" title="Voltar para a página anterior">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M15 18L9 12L15 6"></path>
               </svg>
@@ -50,7 +50,7 @@
                 <path d="M12 5V19M5 12H19"></path>
               </svg>
             </button>
-            <button id="open-settings" type="button" class="icon-only-btn" aria-label="Abrir configuraÃ§Ãµes do projeto" title="Abrir configuraÃ§Ãµes do projeto">
+            <button id="open-settings" type="button" class="icon-only-btn" aria-label="Abrir configurações do projeto" title="Abrir configurações do projeto">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M12 15.5A3.5 3.5 0 1 0 12 8.5A3.5 3.5 0 0 0 12 15.5Z"></path>
                 <path d="M19.4 15A1.7 1.7 0 0 0 19.74 16.87L19.8 16.93A2 2 0 1 1 16.97 19.76L16.91 19.7A1.7 1.7 0 0 0 15.04 19.36A1.7 1.7 0 0 0 14 20.9V21A2 2 0 1 1 10 21V20.9A1.7 1.7 0 0 0 8.97 19.36A1.7 1.7 0 0 0 7.1 19.7L7.03 19.76A2 2 0 1 1 4.2 16.93L4.26 16.87A1.7 1.7 0 0 0 4.6 15A1.7 1.7 0 0 0 3.06 14H3A2 2 0 1 1 3 10H3.1A1.7 1.7 0 0 0 4.6 9A1.7 1.7 0 0 0 4.26 7.13L4.2 7.07A2 2 0 1 1 7.03 4.24L7.1 4.3A1.7 1.7 0 0 0 8.97 4.64H9A1.7 1.7 0 0 0 10 3.1V3A2 2 0 1 1 14 3V3.1A1.7 1.7 0 0 0 15.04 4.64A1.7 1.7 0 0 0 16.91 4.3L16.97 4.24A2 2 0 1 1 19.8 7.07L19.74 7.13A1.7 1.7 0 0 0 19.4 9V9A1.7 1.7 0 0 0 20.94 10H21A2 2 0 1 1 21 14H20.9A1.7 1.7 0 0 0 19.4 15Z"></path>
@@ -71,7 +71,7 @@
           <ul id="col-fazendo" class="kanban-list"></ul>
         </article>
         <article class="kanban-column">
-          <h3>ConcluÃ­do</h3>
+          <h3>Concluí­do</h3>
           <ul id="col-concluido" class="kanban-list"></ul>
         </article>
       </section>
@@ -90,27 +90,27 @@
         <p id="task-modal-description" class="hint"></p>
         <form id="task-settings-form" class="task-settings-form">
           <div class="inline">
-            <select id="task-settings-assigned-to" aria-label="Selecionar responsÃ¡vel do item"></select>
-            <button type="submit" aria-label="Salvar responsÃ¡vel do item" title="Salvar responsÃ¡vel do item">Salvar responsÃ¡vel</button>
+            <select id="task-settings-assigned-to" aria-label="Selecionar responsável do item"></select>
+            <button type="submit" aria-label="Salvar responsável do item" title="Salvar responsável do item">Salvar responsável</button>
           </div>
           <p id="task-settings-hint" class="hint"></p>
         </form>
         <form id="task-comment-form">
-          <label class="sr-only" for="task-comment-type">Tipo do comentario do item</label>
+          <label class="sr-only" for="task-comment-type">Tipo do comentário do item</label>
           <select id="task-comment-type" required aria-label="Tipo do comentario do item">
-            <option value="anotacao">Anotacao</option>
+            <option value="anotacao">Anotação</option>
             <option value="melhoria">Melhoria</option>
             <option value="bug">Bug</option>
             <option value="bloqueado">Bloqueado</option>
           </select>
-          <label class="sr-only" for="task-comment-content">Comentario do item</label>
+          <label class="sr-only" for="task-comment-content">Comentário do item</label>
           <textarea
             id="task-comment-content"
-            placeholder="Escreva um comentÃ¡rio neste item"
+            placeholder="Escreva um comentário neste item"
             minlength="20"
             required
           ></textarea>
-          <button type="submit" aria-label="Adicionar comentÃ¡rio ao item" title="Adicionar comentÃ¡rio ao item">Adicionar comentÃ¡rio</button>
+          <button type="submit" aria-label="Adicionar comentário ao item" title="Adicionar comentário ao item">Adicionar comentário</button>
         </form>
         <ul id="task-comments-list" class="list"></ul>
       </div>
@@ -133,29 +133,29 @@
           </button>
         </div>
         <form id="task-form">
-          <label class="sr-only" for="task-title-input">Titulo do item</label>
+          <label class="sr-only" for="task-title-input">Título do item</label>
           <input
             type="text"
             id="task-title-input"
-            placeholder="TÃ­tulo do item"
+            placeholder="Título do item"
             minlength="15"
             required
           />
-          <label class="sr-only" for="task-description-input">Descricao do item</label>
+          <label class="sr-only" for="task-description-input">Descrição do item</label>
           <textarea
             id="task-description-input"
-            placeholder="DescriÃ§Ã£o do item"
+            placeholder="Descrição do item"
             minlength="30"
             required
           ></textarea>
           <div class="inline">
-            <label class="sr-only" for="task-assigned-to">Responsavel do item</label>
-            <select id="task-assigned-to" aria-label="Responsavel do item"></select>
+            <label class="sr-only" for="task-assigned-to">Responsável do item</label>
+            <select id="task-assigned-to" aria-label="Responsável do item"></select>
             <label class="sr-only" for="task-status">Status inicial do item</label>
             <select id="task-status" aria-label="Status inicial do item">
               <option value="a_fazer">A fazer</option>
               <option value="fazendo">Fazendo</option>
-              <option value="concluido">ConcluÃ­do</option>
+              <option value="concluido">Concluído</option>
             </select>
           </div>
           <button id="task-submit-btn" type="submit" aria-label="Criar item" title="Criar item">Criar item</button>
@@ -166,7 +166,7 @@
     <section id="settings-modal" class="modal-overlay hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="settings-title">
       <div class="modal-card modal-lg">
         <div class="modal-head">
-          <h3 id="settings-title">ConfiguraÃ§Ãµes do projeto</h3>
+          <h3 id="settings-title">Configurações do projeto</h3>
           <button id="close-settings-modal" type="button" class="btn-light btn-icon" aria-label="Fechar" title="Fechar">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M6 6L18 18M18 6L6 18"></path>
@@ -180,7 +180,7 @@
             <input type="email" id="member-email" placeholder="E-mail do membro" required />
             <label class="sr-only" for="member-role">Papel do membro</label>
             <select id="member-role" aria-label="Papel do membro">
-              <option value="member">UsuÃ¡rio comum</option>
+              <option value="member">Usuário comum</option>
               <option value="admin">Admin do projeto</option>
             </select>
             <button type="submit" aria-label="Adicionar ou atualizar membro" title="Adicionar ou atualizar membro">
@@ -194,20 +194,20 @@
             <label class="sr-only" for="settings-project-description">Descricao do projeto</label>
             <textarea
               id="settings-project-description"
-              placeholder="DescriÃ§Ã£o do projeto"
+              placeholder="Descrição do projeto"
               minlength="15"
               required
             ></textarea>
-            <button type="submit" aria-label="Salvar configuraÃ§Ãµes do projeto" title="Salvar configuraÃ§Ãµes do projeto">
-              Salvar configuraÃ§Ãµes
+            <button type="submit" aria-label="Salvar Configurações do projeto" title="Salvar configurações do projeto">
+              Salvar configurações
             </button>
           </form>
         </div>
 
-        <h3>Membros e permissÃµes</h3>
+        <h3>Membros e permissões</h3>
         <ul id="members-list" class="list"></ul>
 
-        <h3>ComentÃ¡rios do projeto</h3>
+        <h3>Comentários do projeto</h3>
         <form id="project-comment-form">
           <label class="sr-only" for="project-comment-type">Tipo do comentario no projeto</label>
           <select id="project-comment-type" required aria-label="Tipo do comentario no projeto">
@@ -216,10 +216,10 @@
             <option value="bug">Bug</option>
             <option value="bloqueado">Bloqueado</option>
           </select>
-          <label class="sr-only" for="project-comment-content">Comentario do projeto</label>
+          <label class="sr-only" for="project-comment-content">Comentário do projeto</label>
           <textarea
             id="project-comment-content"
-            placeholder="Escreva um comentÃ¡rio no projeto"
+            placeholder="Escreva um comentário no projeto"
             minlength="20"
             required
           ></textarea>
@@ -233,16 +233,15 @@
       id="open-history"
       class="history-fab"
       type="button"
-      aria-label="Abrir histÃ³rico de itens concluÃ­dos"
-      title="Abrir histÃ³rico de itens concluÃ­dos"
-    >
-      HistÃ³rico de concluÃ­dos
+      aria-label="Abrir histórico de itens concluídos"
+      title="Abrir histórico de itens concluídoss">
+      Histórico de concluídos
     </button>
 
     <section id="history-modal" class="modal-overlay hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="history-title">
       <div class="modal-card">
         <div class="modal-head">
-          <h3 id="history-title">HistÃ³rico de itens concluÃ­dos</h3>
+          <h3 id="history-title">Histórico de concluídos</h3>
           <button id="close-history-modal" type="button" class="btn-light btn-icon" aria-label="Fechar" title="Fechar">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M6 6L18 18M18 6L6 18"></path>
@@ -256,17 +255,17 @@
     <section id="delete-task-modal" class="modal-overlay hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="delete-task-title">
       <div class="modal-card">
         <div class="modal-head">
-          <h3 id="delete-task-title">Confirmar exclusÃ£o do item</h3>
+          <h3 id="delete-task-title">Confirmar exclusão do item?</h3>
           <button id="close-delete-task-modal" type="button" class="btn-light btn-icon" aria-label="Fechar" title="Fechar">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M6 6L18 18M18 6L6 18"></path>
             </svg>
           </button>
         </div>
-        <p id="delete-task-message">Tem certeza que deseja excluir este item</p>
+        <p id="delete-task-message">Tem certeza que deseja excluir este item?</p>
         <div class="inline-actions">
-          <button id="cancel-delete-task" type="button" class="btn-light" title="Cancelar exclusÃ£o">Cancelar</button>
-          <button id="confirm-delete-task" type="button" class="danger" title="Confirmar exclusÃ£o do item">
+          <button id="cancel-delete-task" type="button" class="btn-light" title="Cancelar exclusão">Cancelar</button>
+          <button id="confirm-delete-task" type="button" class="danger" title="Confirmar exclusão do item">
             Excluir item
           </button>
         </div>
@@ -276,7 +275,7 @@
     <section id="delete-member-modal" class="modal-overlay hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="delete-member-title">
       <div class="modal-card">
         <div class="modal-head">
-          <h3 id="delete-member-title">Confirmar remoÃ§Ã£o de membro</h3>
+          <h3 id="delete-member-title">Confirmar remoção de membro?</h3>
           <button id="close-delete-member-modal" type="button" class="btn-light btn-icon" aria-label="Fechar" title="Fechar">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M6 6L18 18M18 6L6 18"></path>
@@ -285,8 +284,8 @@
         </div>
         <p id="delete-member-message">Tem certeza que deseja remover este membro do projeto?</p>
         <div class="inline-actions">
-          <button id="cancel-delete-member" type="button" class="btn-light" title="Cancelar remoÃ§Ã£o">Cancelar</button>
-          <button id="confirm-delete-member" type="button" class="danger" title="Confirmar remoÃ§Ã£o do membro">
+          <button id="cancel-delete-member" type="button" class="btn-light" title="Cancelar remoção">Cancelar</button>
+          <button id="confirm-delete-member" type="button" class="danger" title="Confirmar remoção do membro">
             Remover membro
           </button>
         </div>
@@ -305,7 +304,7 @@
         </div>
         <p id="blocking-confirm-message">O card possui blocker e/ou bug vinculado. Deseja concluir mesmo assim?</p>
         <div class="inline-actions">
-          <button id="cancel-blocking-confirm" type="button" class="btn-light" title="Cancelar conclusÃ£o">Cancelar</button>
+          <button id="cancel-blocking-confirm" type="button" class="btn-light" title="Cancelar conclusão">Cancelar</button>
           <button id="confirm-blocking-confirm" type="button" class="danger" title="Concluir mesmo com bloqueio">
             Concluir mesmo assim
           </button>
@@ -316,17 +315,17 @@
     <section id="logout-modal" class="modal-overlay hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="logout-title">
       <div class="modal-card">
         <div class="modal-head">
-          <h3 id="logout-title">Confirmar saÃ­da</h3>
+          <h3 id="logout-title">Confirmar saí­da</h3>
           <button id="close-logout-modal" type="button" class="btn-light btn-icon" aria-label="Fechar" title="Fechar">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M6 6L18 18M18 6L6 18"></path>
             </svg>
           </button>
         </div>
-        <p>Deseja encerrar sua sessÃ£o agora</p>
+        <p>Deseja encerrar sua sessão agora</p>
         <div class="inline-actions">
-          <button id="cancel-logout" type="button" class="btn-light" title="Cancelar saÃ­da">Cancelar</button>
-          <button id="confirm-logout" type="button" class="danger" title="Confirmar saÃ­da">Sair</button>
+          <button id="cancel-logout" type="button" class="btn-light" title="Cancelar saí­da">Cancelar</button>
+          <button id="confirm-logout" type="button" class="danger" title="Confirmar saí­da">Sair</button>
         </div>
       </div>
     </section>
